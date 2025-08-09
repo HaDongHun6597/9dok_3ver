@@ -90,6 +90,12 @@ class SubscriptionCalculator {
         for (const [index, product] of this.selectedProducts.entries()) {
             const productCard = await this.createProductCard(product, index);
             productsGrid.insertBefore(productCard, addProductCard);
+            
+            // 폰트 크기 조정
+            const productTitleElement = productCard.querySelector('.product-title');
+            if (productTitleElement) {
+                this.adjustFontSizeToFit(productTitleElement);
+            }
         }
         
         // 제품 추가 버튼이 항상 보이도록 확인
@@ -146,7 +152,7 @@ class SubscriptionCalculator {
             <button class="product-remove-top" onclick="calculator.removeProduct(${index})">×</button>
             <div class="product-header-content">
                 <div class="product-image">${getProductIcon(productGroup)}</div>
-                <div>
+                <div class="product-text-container">
                     <div class="product-title">${product['모델명'] || '제품명 없음'}</div>
                     <div class="product-specs">
                         ${product['결합유형'] || '-'} | ${product['계약기간'] || '-'}<br>
@@ -168,6 +174,28 @@ class SubscriptionCalculator {
                 </div>
             </div>
         `;
+
+        // 모델명 길이에 따른 폰트 크기 자동 조정
+        const productTitleElement = card.querySelector('.product-title');
+        const modelName = product['모델명'] || '제품명 없음';
+        const textLength = modelName.length;
+        
+        let fontSize;
+        if (textLength <= 10) {
+            fontSize = '16px';
+        } else if (textLength <= 15) {
+            fontSize = '14px';
+        } else if (textLength <= 20) {
+            fontSize = '12px';
+        } else if (textLength <= 30) {
+            fontSize = '10px';
+        } else if (textLength <= 40) {
+            fontSize = '9px';
+        } else {
+            fontSize = '8px';
+        }
+        
+        productTitleElement.style.fontSize = fontSize;
 
         // 비동기적으로 이미지 URL을 가져와서 업데이트
         try {
@@ -383,6 +411,13 @@ class SubscriptionCalculator {
             // 선택된 카드의 사용금액 옵션들
             const cardOptions = cards.filter(card => card.카드 === this.selectedCard);
             
+            // 사용금액 기준으로 오름차순 정렬 (00만원 이상에서 숫자 추출)
+            cardOptions.sort((a, b) => {
+                const amountA = this.extractAmountFromUsage(a.사용금액);
+                const amountB = this.extractAmountFromUsage(b.사용금액);
+                return amountA - amountB;
+            });
+            
             container.innerHTML = `
                 <div class="step-info">
                     2단계: ${this.selectedCard} 카드의 사용금액을 선택해주세요
@@ -518,7 +553,6 @@ class SubscriptionCalculator {
         // 계산기 UI 업데이트
         const normalPriceEl = document.getElementById('normalPrice');
         const promotionPriceEl = document.getElementById('promotionPrice');
-        const totalBenefitEl = document.getElementById('totalBenefit');
         const finalPriceEl = document.getElementById('finalPrice');
         const promotionDiscountDetailEl = document.getElementById('promotionDiscountDetail');
         const combinationDiscountDetailEl = document.getElementById('combinationDiscountDetail');
@@ -526,7 +560,6 @@ class SubscriptionCalculator {
         
         if (normalPriceEl) normalPriceEl.textContent = this.formatPrice(normalPrice);
         if (promotionPriceEl) promotionPriceEl.textContent = this.formatPrice(promotionDiscount + partnerCardDiscount);
-        if (totalBenefitEl) totalBenefitEl.textContent = this.formatPrice(totalDiscount);
         if (finalPriceEl) finalPriceEl.textContent = this.formatPrice(total);
         
         // 추가혜택 세부사항 업데이트
@@ -539,6 +572,9 @@ class SubscriptionCalculator {
         if (partnerCardDetailEl) {
             partnerCardDetailEl.textContent = `• 제휴카드: ${this.formatPrice(partnerCardDiscount)}`;
         }
+        
+        // 선납금액 계산 및 표시
+        this.updatePrepaymentSection();
         
         console.log('계산기 업데이트:', {
             총액: total,
@@ -559,6 +595,39 @@ class SubscriptionCalculator {
             return '0원';
         }
         return price.toLocaleString() + '원';
+    }
+
+    // 텍스트가 컨테이너에 맞게 글꼴 크기 조정
+    adjustFontSizeToFit(element, maxAttempts = 20) { // Increased maxAttempts
+        if (!element) return;
+
+        let fontSize = parseFloat(window.getComputedStyle(element).fontSize);
+        const initialFontSize = fontSize;
+        let attempts = 0;
+
+        console.log(`Adjusting font for: ${element.textContent}`);
+        console.log(`Initial font size: ${initialFontSize}px`);
+        console.log(`Initial scrollWidth: ${element.scrollWidth}, clientWidth: ${element.clientWidth}`);
+
+        // 텍스트가 넘치는지 확인하고 글꼴 크기를 줄임
+        while (element.scrollWidth > element.clientWidth && attempts < maxAttempts) {
+            fontSize -= 1; // Increased reduction step to 1px
+            element.style.fontSize = `${fontSize}px`;
+            attempts++;
+            console.log(`Attempt ${attempts}: fontSize=${fontSize}px, scrollWidth=${element.scrollWidth}, clientWidth=${element.clientWidth}`);
+        }
+
+        // 만약 텍스트가 여전히 넘치거나 너무 많이 줄어들었다면, 최소 크기 보장
+        // 또는 다른 처리 (예: 말줄임표)를 고려할 수 있음
+        if (element.scrollWidth > element.clientWidth) {
+            console.log(`Font adjustment failed to fit: scrollWidth=${element.scrollWidth}, clientWidth=${element.clientWidth}`);
+            // 최종적으로도 넘친다면, 텍스트를 자르고 말줄임표를 추가할 수 있음
+            // element.style.whiteSpace = 'nowrap';
+            // element.style.overflow = 'hidden';
+            // element.style.textOverflow = 'ellipsis';
+        } else {
+            console.log(`Font adjustment successful: final fontSize=${fontSize}px`);
+        }
     }
     
     // 계약기간과 프로모션 기간을 고려한 기간별 할인 계산
@@ -767,6 +836,103 @@ class SubscriptionCalculator {
             // 1개만 선택할 때는 모든 옵션 표시
             return null; // 모든 옵션 표시
         }
+    }
+
+    // 추가혜택 세부사항 토글 기능
+    toggleBenefitDetails() {
+        const benefitDetails = document.getElementById('benefitDetails');
+        const benefitArrow = document.getElementById('benefitArrow');
+        
+        if (benefitDetails.style.display === 'none') {
+            benefitDetails.style.display = 'block';
+            benefitArrow.classList.add('rotated');
+            benefitArrow.textContent = '▲';
+        } else {
+            benefitDetails.style.display = 'none';
+            benefitArrow.classList.remove('rotated');
+            benefitArrow.textContent = '▼';
+        }
+    }
+
+    // 선납금액 섹션 업데이트
+    updatePrepaymentSection() {
+        const prepaymentSection = document.getElementById('prepaymentSection');
+        const prepaymentPrice = document.getElementById('prepaymentPrice');
+        const prepaymentDetail = document.getElementById('prepaymentDetail');
+        
+        // 선납 옵션이 있는 제품들 찾기
+        const prepaidProducts = this.selectedProducts.filter(product => 
+            product['선납'] && product['선납'] !== '선납없음'
+        );
+        
+        if (prepaidProducts.length === 0) {
+            prepaymentSection.style.display = 'none';
+            return;
+        }
+        
+        prepaymentSection.style.display = 'block';
+        
+        // 선납금액 계산 (선납금액 필드 값 사용)
+        let totalPrepayment = 0;
+        const prepaymentDetails = [];
+        
+        prepaidProducts.forEach(product => {
+            const prepayAmount = this.parsePrice(product['선납금액']);
+            const prepayOption = product['선납'];
+            
+            if (prepayAmount > 0) {
+                totalPrepayment += prepayAmount;
+                prepaymentDetails.push({
+                    modelName: product['모델명'],
+                    amount: this.formatPrice(prepayAmount),
+                    option: prepayOption
+                });
+            }
+        });
+        
+        prepaymentPrice.textContent = this.formatPrice(totalPrepayment);
+        
+        // 세부항목을 개별 div로 생성하고 폰트 크기 조정
+        if (prepaymentDetails.length > 0) {
+            prepaymentDetail.innerHTML = '';
+            prepaymentDetails.forEach(detail => {
+                const detailDiv = document.createElement('div');
+                detailDiv.className = 'prepayment-detail-item';
+                detailDiv.textContent = `• ${detail.modelName}: ${detail.amount} (${detail.option})`;
+                
+                // 모델명 길이에 따른 폰트 크기 조정
+                const textLength = detail.modelName.length;
+                let fontSize;
+                
+                if (textLength <= 10) {
+                    fontSize = '12px';
+                } else if (textLength <= 15) {
+                    fontSize = '11px';
+                } else if (textLength <= 20) {
+                    fontSize = '10px';
+                } else if (textLength <= 30) {
+                    fontSize = '9px';
+                } else if (textLength <= 40) {
+                    fontSize = '8px';
+                } else {
+                    fontSize = '7px';
+                }
+                
+                detailDiv.style.fontSize = fontSize;
+                prepaymentDetail.appendChild(detailDiv);
+            });
+        } else {
+            prepaymentDetail.innerHTML = '• 해당 제품 없음';
+        }
+    }
+
+    // 사용금액에서 숫자 추출 (예: "30만원 이상" -> 30)
+    extractAmountFromUsage(usageText) {
+        if (!usageText) return 0;
+        
+        // "30만원 이상", "80만원 이상" 등에서 숫자 부분 추출
+        const match = usageText.match(/(\d+)만원/);
+        return match ? parseInt(match[1]) : 0;
     }
 }
 

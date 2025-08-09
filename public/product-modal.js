@@ -242,9 +242,30 @@ class ProductSelectionModal {
             optionCard.className = 'option-card';
             optionCard.dataset.value = option;
             
-            optionCard.innerHTML = `
-                <div class="option-title">${option}</div>
-            `;
+            const optionTitle = document.createElement('div');
+            optionTitle.className = 'option-title';
+            optionTitle.textContent = option;
+            optionCard.appendChild(optionTitle);
+            
+            // 텍스트 길이에 따른 간단한 폰트 크기 조정
+            const textLength = option.length;
+            let fontSize;
+            
+            if (textLength <= 10) {
+                fontSize = '14px';
+            } else if (textLength <= 15) {
+                fontSize = '12px';
+            } else if (textLength <= 20) {
+                fontSize = '10px';
+            } else if (textLength <= 30) {
+                fontSize = '8px';
+            } else if (textLength <= 40) {
+                fontSize = '7px';
+            } else {
+                fontSize = '6px';
+            }
+            
+            optionTitle.style.fontSize = fontSize;
             
             optionCard.addEventListener('click', () => this.selectOptionAndNext(option, field, optionCard));
             
