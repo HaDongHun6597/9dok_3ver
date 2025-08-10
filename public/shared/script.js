@@ -27,6 +27,19 @@ class SubscriptionCalculator {
     }
     
     initModal() {
+        console.log('모달 초기화 시작...');
+        
+        // DOM 요소들이 존재하는지 확인
+        const requiredElements = ['productModal', 'closeModal', 'addProductCard'];
+        const missingElements = requiredElements.filter(id => !document.getElementById(id));
+        
+        if (missingElements.length > 0) {
+            console.warn('모달 초기화 지연 - 필요한 DOM 요소들이 없음:', missingElements);
+            // 100ms 후 다시 시도
+            setTimeout(() => this.initModal(), 100);
+            return;
+        }
+        
         try {
             this.modal = new ProductSelectionModal(this);
             console.log('ProductSelectionModal 초기화 완료');
@@ -50,25 +63,99 @@ class SubscriptionCalculator {
         
         // 제품 추가 버튼
         const addProductCard = document.getElementById('addProductCard');
+        console.log('addProductCard 요소 확인:', addProductCard);
+        
         if (addProductCard) {
-            addProductCard.addEventListener('click', () => {
-                console.log('제품 추가 버튼 클릭됨');
+            addProductCard.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('제품 추가 버튼 클릭됨!');
+                console.log('this.modal:', this.modal);
+                
                 if (this.modal) {
+                    console.log('모달 openModal() 호출');
                     this.modal.openModal();
                 } else {
                     console.error('모달이 초기화되지 않음');
+                    // 모달이 없으면 다시 초기화 시도
+                    this.initModal();
+                    setTimeout(() => {
+                        if (this.modal) {
+                            this.modal.openModal();
+                        }
+                    }, 100);
                 }
             });
             console.log('제품 추가 버튼 이벤트 리스너 등록됨');
         } else {
             console.error('addProductCard 요소를 찾을 수 없음');
+            console.log('현재 DOM에 있는 모든 ID들:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
         }
         
         // 초기 렌더링
         this.renderProductsGrid();
-        this.updateCalculator();
+        this.updateCalculatorInitial();
+        
+        // 제품 추가 버튼 이벤트 리스너를 다시 한 번 확실히 등록
+        this.ensureAddButtonListener();
         
         console.log('EventListener 설정 완료');
+    }
+    
+    ensureAddButtonListener() {
+        console.log('ensureAddButtonListener() 호출');
+        const addProductCard = document.getElementById('addProductCard');
+        
+        if (addProductCard) {
+            // 기존 리스너가 있을 수 있으니 제거하고 새로 추가
+            const newButton = addProductCard.cloneNode(true);
+            addProductCard.parentNode.replaceChild(newButton, addProductCard);
+            
+            newButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('제품 추가 버튼 클릭됨! (ensureAddButtonListener)');
+                
+                if (this.modal) {
+                    console.log('모달 openModal() 호출');
+                    this.modal.openModal();
+                } else {
+                    console.error('모달이 아직 초기화되지 않음, 재시도...');
+                    setTimeout(() => {
+                        if (this.modal) {
+                            this.modal.openModal();
+                        } else {
+                            console.error('모달 초기화 실패');
+                        }
+                    }, 100);
+                }
+            });
+            console.log('제품 추가 버튼 이벤트 리스너 재등록 완료');
+        } else {
+            console.error('제품 추가 버튼을 찾을 수 없음 (ensureAddButtonListener)');
+        }
+    }
+    
+    updateCalculatorInitial() {
+        // 초기 상태: 제품이 없을 때의 기본 표시값
+        const normalPriceEl = document.getElementById('normalPrice');
+        const promotionPriceEl = document.getElementById('promotionPrice');
+        const finalPriceEl = document.getElementById('finalPrice');
+        const promotionDiscountDetailEl = document.getElementById('promotionDiscountDetail');
+        const combinationDiscountDetailEl = document.getElementById('combinationDiscountDetail');
+        const partnerCardDetailEl = document.getElementById('partnerCardDetail');
+        
+        if (normalPriceEl) normalPriceEl.textContent = '0원';
+        if (promotionPriceEl) promotionPriceEl.textContent = '0원';
+        if (finalPriceEl) finalPriceEl.textContent = '0원';
+        if (promotionDiscountDetailEl) promotionDiscountDetailEl.textContent = '• 프로모션할인: 0원';
+        if (combinationDiscountDetailEl) combinationDiscountDetailEl.textContent = '• 결합할인: 0원';
+        if (partnerCardDetailEl) partnerCardDetailEl.textContent = '• 제휴카드: 0원';
+        
+        // 선납금액 섹션 숨기기
+        const prepaymentSection = document.getElementById('prepaymentSection');
+        if (prepaymentSection) {
+            prepaymentSection.style.display = 'none';
+        }
     }
     
     async renderProductsGrid() {
@@ -82,14 +169,9 @@ class SubscriptionCalculator {
         const existingProducts = productsGrid.querySelectorAll('.product-card');
         existingProducts.forEach(card => card.remove());
         
-        // 제품이 있으면 웰컴 메시지 숨기고, 없으면 웰컴 메시지 표시
-        if (this.selectedProducts.length > 0) {
-            if (welcomeMessage) welcomeMessage.style.display = 'none';
-            if (productsGrid) productsGrid.style.display = 'grid';
-        } else {
-            if (welcomeMessage) welcomeMessage.style.display = 'block';
-            if (productsGrid) productsGrid.style.display = 'grid';
-        }
+        // 항상 제품 그리드는 표시하고, 웰컴 메시지는 숨김
+        if (welcomeMessage) welcomeMessage.style.display = 'none';
+        if (productsGrid) productsGrid.style.display = 'grid';
         
         // 선택된 제품들을 각각 개별 카드로 표시 (같은 제품이라도 각각 다른 제휴카드 적용 가능)
         for (const [index, product] of this.selectedProducts.entries()) {
@@ -246,8 +328,8 @@ class SubscriptionCalculator {
         if (periodInfo.promotionPeriod > 0) {
             pricingHTML += `
                 <div class="price-item discount promotion-period">
-                    <span class="price-label">월 카드혜택 (${periodInfo.promotionPeriod}개월간)</span>
-                    <span class="price-value discount-value">-${this.formatPrice(Math.min(partnerCard.promotionDiscount, monthlyFee))}</span>
+                    <span class="price-label">월 ${partnerCard.name} 할인 (${periodInfo.promotionPeriod}개월간)</span>
+                    <span class="price-value discount-value">-${this.formatPrice(partnerCard.promotionDiscount)}</span>
                 </div>
                 <div class="price-item final-price promotion-final">
                     <span class="price-label">월 혜택가격 (${periodInfo.promotionPeriod}개월간)</span>
@@ -260,8 +342,8 @@ class SubscriptionCalculator {
         if (periodInfo.basicPeriod > 0) {
             pricingHTML += `
                 <div class="price-item discount basic-period">
-                    <span class="price-label">월 카드혜택 (${periodInfo.promotionPeriod + 1}~${periodInfo.totalMonths}개월)</span>
-                    <span class="price-value discount-value">-${this.formatPrice(Math.min(partnerCard.basicDiscount, monthlyFee))}</span>
+                    <span class="price-label">월 ${partnerCard.name} 할인 (${periodInfo.promotionPeriod + 1}~${periodInfo.totalMonths}개월)</span>
+                    <span class="price-value discount-value">-${this.formatPrice(partnerCard.basicDiscount)}</span>
                 </div>
                 <div class="price-item final-price basic-final">
                     <span class="price-label">월 혜택가격 (${periodInfo.promotionPeriod + 1}~${periodInfo.totalMonths}개월)</span>
@@ -570,7 +652,7 @@ class SubscriptionCalculator {
         const partnerCardDetailEl = document.getElementById('partnerCardDetail');
         
         if (normalPriceEl) normalPriceEl.textContent = this.formatPrice(normalPrice);
-        if (promotionPriceEl) promotionPriceEl.textContent = this.formatPrice(promotionDiscount + partnerCardDiscount);
+        if (promotionPriceEl) promotionPriceEl.textContent = this.formatPrice(promotionDiscount + combinationDiscount + partnerCardDiscount);
         if (finalPriceEl) finalPriceEl.textContent = this.formatPrice(total);
         
         // 추가혜택 세부사항 업데이트
@@ -949,12 +1031,49 @@ class SubscriptionCalculator {
 
 // 페이지 로드 시 초기화
 let calculator;
-document.addEventListener('DOMContentLoaded', () => {
-    calculator = new SubscriptionCalculator();
+
+// 템플릿 로딩을 위한 초기화 함수
+function initializeCalculator() {
+    console.log('initializeCalculator 호출됨');
     
-    // 레이아웃 로딩 완료 표시
-    const productsGrid = document.getElementById('productsGrid');
-    if (productsGrid) {
-        productsGrid.classList.add('loaded');
+    if (calculator) {
+        console.log('Calculator 이미 초기화됨, 재초기화 생략');
+        return; // 이미 초기화된 경우 중복 실행 방지
     }
+    
+    // DOM 요소들이 존재하는지 확인
+    const requiredElements = ['addProductCard', 'productsGrid', 'normalPrice', 'finalPrice'];
+    const missingElements = requiredElements.filter(id => {
+        const element = document.getElementById(id);
+        console.log(`${id} 요소:`, element);
+        return !element;
+    });
+    
+    if (missingElements.length > 0) {
+        console.warn('필요한 DOM 요소들이 없음, 재시도:', missingElements);
+        // 200ms 후 다시 시도
+        setTimeout(initializeCalculator, 200);
+        return;
+    }
+    
+    try {
+        calculator = new SubscriptionCalculator();
+        
+        // 전역 window 객체에도 할당하여 onclick에서 접근 가능하도록
+        window.calculator = calculator;
+        
+        console.log('Calculator 초기화 완료');
+        console.log('window.calculator:', window.calculator);
+    } catch (error) {
+        console.error('Calculator 초기화 실패:', error);
+    }
+}
+
+// DOM이 준비되었을 때 초기화
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded 이벤트 발생');
+    initializeCalculator();
 });
+
+// 전역에서 템플릿 로드 후 호출할 수 있는 함수
+window.initializeCalculator = initializeCalculator;

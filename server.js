@@ -9,7 +9,32 @@ const PORT = 3008;
 // 미들웨어
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+
+// 채널별 라우팅 설정
+app.use('/em', express.static('public/em'));        // 이마트
+app.use('/hp', express.static('public/hp'));        // 홈플러스  
+app.use('/et', express.static('public/et'));        // 전자랜드
+app.use('/', express.static('public'));             // 기본 정적 파일
+
+// 기본 루트는 채널 선택 페이지 표시
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'channel-select.html'));
+});
+
+// 채널 감지 함수
+function getChannelFromRequest(req) {
+    const referer = req.get('referer') || '';
+    if (referer.includes('/hp')) return 'hp';
+    if (referer.includes('/et')) return 'et';
+    return 'em'; // 기본값: 이마트
+}
+
+// 채널 설정 (향후 hp, et 테이블 추가 시 수정)
+const channelConfigs = {
+    em: { name: '이마트', dataTable: 'products' },
+    hp: { name: '홈플러스', dataTable: 'products' },    // 나중에 products_hp로 변경
+    et: { name: '전자랜드', dataTable: 'products' }     // 나중에 products_et로 변경
+};
 
 // MariaDB 연결
 const pool = mariadb.createPool({
@@ -29,9 +54,13 @@ app.get('/api/products', async (req, res) => {
     const { category, search, page = 1, limit = 50 } = req.query;
     const offset = (page - 1) * limit;
     
+    // 채널 감지 및 테이블 선택
+    const channel = getChannelFromRequest(req);
+    const tableName = channelConfigs[channel].dataTable;
+    
     conn = await pool.getConnection();
     
-    let query = 'SELECT * FROM products WHERE 1=1';
+    let query = `SELECT * FROM ${tableName} WHERE 1=1`;
     let params = [];
     
     if (category && category !== 'all') {
@@ -60,8 +89,12 @@ app.get('/api/products', async (req, res) => {
 app.get('/api/categories', async (req, res) => {
   let conn;
   try {
+    // 채널 감지 및 테이블 선택
+    const channel = getChannelFromRequest(req);
+    const tableName = channelConfigs[channel].dataTable;
+    
     conn = await pool.getConnection();
-    const rows = await conn.query('SELECT DISTINCT 제품군 FROM products ORDER BY 제품군');
+    const rows = await conn.query(`SELECT DISTINCT 제품군 FROM ${tableName} ORDER BY 제품군`);
     res.json(rows.map(row => row.제품군).filter(Boolean));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -77,9 +110,13 @@ app.get('/api/products/find-exact', async (req, res) => {
     const filters = req.query;
     console.log('받은 필터:', filters);
     
+    // 채널 감지 및 테이블 선택
+    const channel = getChannelFromRequest(req);
+    const tableName = channelConfigs[channel].dataTable;
+    
     conn = await pool.getConnection();
     
-    let query = 'SELECT * FROM products WHERE 1=1';
+    let query = `SELECT * FROM ${tableName} WHERE 1=1`;
     let params = [];
     
     const allowedFields = ['제품군', '모델명', '결합유형', '계약기간', '관리유형', '방문주기', '선납'];
@@ -124,8 +161,13 @@ app.get('/api/products/:id', async (req, res) => {
   let conn;
   try {
     const { id } = req.params;
+    
+    // 채널 감지 및 테이블 선택
+    const channel = getChannelFromRequest(req);
+    const tableName = channelConfigs[channel].dataTable;
+    
     conn = await pool.getConnection();
-    const rows = await conn.query('SELECT * FROM products WHERE id = ?', [id]);
+    const rows = await conn.query(`SELECT * FROM ${tableName} WHERE id = ?`, [id]);
     
     if (rows.length === 0) {
       res.status(404).json({ error: '제품을 찾을 수 없습니다.' });
@@ -157,7 +199,11 @@ app.get('/api/product-options/:field', async (req, res) => {
       return res.status(400).json({ error: '잘못된 필드입니다.' });
     }
     
-    let query = `SELECT DISTINCT \`${field}\` FROM products WHERE 1=1`;
+    // 채널 감지 및 테이블 선택
+    const channel = getChannelFromRequest(req);
+    const tableName = channelConfigs[channel].dataTable;
+    
+    let query = `SELECT DISTINCT \`${field}\` FROM ${tableName} WHERE 1=1`;
     let params = [];
     
     // 필터 조건 추가

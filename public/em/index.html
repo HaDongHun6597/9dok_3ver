@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>구독 간편조회 - 이마트</title>
+    <link rel="stylesheet" href="../style.css">
+    <script>window.CHANNEL = 'em';</script>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <header class="header">
+            <div class="header-content">
+                <h1>구독간편조회</h1>
+                
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- 왼쪽 계산기 영역 -->
+            <aside class="calculator-sidebar">
+                <div class="calculator-header">
+                    <h2>가전구독 혜택</h2>
+                </div>
+                
+                <!-- 구독 타입별 혜택 -->
+                <div class="benefit-section">
+                    <div class="benefit-item active" data-type="single">
+                        <div class="benefit-title">정상 구독료</div>
+                        <div class="benefit-price" id="normalPrice">0원</div>
+                    </div>
+                    
+                    <div class="benefit-item benefit-toggle" data-type="promotion" onclick="calculator.toggleBenefitDetails()">
+                        <div class="benefit-header">
+                            <div class="benefit-title">추가혜택</div>
+                            <div class="benefit-arrow" id="benefitArrow">▼</div>
+                        </div>
+                        <div class="benefit-price" id="promotionPrice">0원</div>
+                        <div class="benefit-details" id="benefitDetails" style="display: none;">
+                            <div class="benefit-detail" id="promotionDiscountDetail">• 프로모션할인: 0원</div>
+                            <div class="benefit-detail" id="combinationDiscountDetail">• 결합할인: 0원</div>
+                            <div class="benefit-detail" id="partnerCardDetail">• 제휴카드: 0원</div>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item prepayment-section" id="prepaymentSection" style="display: none;">
+                        <div class="benefit-title">선납금액 💳</div>
+                        <div class="benefit-price prepayment-price" id="prepaymentPrice">0원</div>
+                        <div class="benefit-details">
+                            <div class="benefit-detail small-text">선납 선택 시 한번에 납부할 금액</div>
+                            <div class="benefit-detail" id="prepaymentDetail">• 해당 제품 없음</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="final-total">
+                    <div class="final-message">최종 체감 구독료(월)입니다.</div>
+                    <div class="final-price" id="finalPrice">0원</div>
+                </div>
+            </aside>
+
+            <!-- 우측 제품 선택 영역 -->
+            <main class="products-main">
+                <div class="products-grid" id="productsGrid">
+                    <!-- 선택된 제품 카드들이 여기에 표시됩니다 -->
+                    <div class="add-product-card" id="addProductCard">
+                        <div class="add-product-content">
+                            <div class="add-icon">+</div>
+                            <div class="add-text">제품 추가</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 웰컴 메시지 (제품이 없을 때) -->
+                <div class="welcome-message" id="welcomeMessage">
+                    <h3>구독하고 싶은 제품을 선택해보세요</h3>
+                    <p>다양한 가전제품을 월 구독료로 이용할 수 있습니다.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 제품 선택 모달 -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>제품 선택</h2>
+                <span class="close-btn" id="closeModal">&times;</span>
+            </div>
+            
+            <!-- 단계 표시기 -->
+            <div class="step-indicator">
+                <div class="step active" data-step="1">
+                    <span class="step-number">1</span>
+                    <span class="step-label">제품군</span>
+                </div>
+                <div class="step" data-step="2">
+                    <span class="step-number">2</span>
+                    <span class="step-label">모델명</span>
+                </div>
+                <div class="step" data-step="3">
+                    <span class="step-number">3</span>
+                    <span class="step-label">결합유형</span>
+                </div>
+                <div class="step" data-step="4">
+                    <span class="step-number">4</span>
+                    <span class="step-label">계약기간</span>
+                </div>
+                <div class="step" data-step="5">
+                    <span class="step-number">5</span>
+                    <span class="step-label">관리유형</span>
+                </div>
+                <div class="step" data-step="6">
+                    <span class="step-number">6</span>
+                    <span class="step-label">방문주기</span>
+                </div>
+                <div class="step" data-step="7">
+                    <span class="step-number">7</span>
+                    <span class="step-label">선납</span>
+                </div>
+            </div>
+
+            <!-- 스크롤 가능한 내용 영역 -->
+            <div class="modal-scroll-content">
+                <!-- 단계별 선택 영역 -->
+                <div class="step-content">
+                    <div class="step-header">
+                        <div class="step-title" id="stepTitle">제품군을 선택해주세요</div>
+                        <button id="prevBtnTop" class="btn btn-secondary btn-small" style="display: none;">← 이전</button>
+                    </div>
+                    
+                    <!-- 검색창 (많은 옵션이 있을 때만 표시) -->
+                    <div class="search-section" id="searchSection" style="display: none;">
+                        <input type="text" id="optionSearch" placeholder="검색어를 입력하세요..." />
+                        <div class="search-result-count" id="searchResultCount"></div>
+                    </div>
+                    
+                    <div class="options-grid" id="optionsGrid">
+                        <!-- 선택 옵션들이 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+
+                <!-- 선택 내역 표시 -->
+                <div class="selection-summary">
+                    <h4>선택 내역</h4>
+                    <div class="selection-items" id="selectionItems">
+                        <!-- 선택된 내역들이 표시됩니다 -->
+                    </div>
+                </div>
+
+                <!-- 버튼 영역 (자동 진행으로 인해 숨김) -->
+                <div class="modal-footer" style="display: none;">
+                    <button id="skipBtn" class="btn btn-secondary">건너뛰기</button>
+                    <button id="addBtn" class="btn btn-success">제품 추가</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 제휴카드 모달 -->
+    <div id="partnerCardModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>제휴카드 선택</h2>
+                <span class="close-btn" onclick="calculator.closePartnerCardModal()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <p>제품에 적용할 제휴카드를 선택해주세요.</p>
+                <div id="partnerCardOptions" class="partner-card-grid">
+                    <!-- 제휴카드 옵션들이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button onclick="calculator.closePartnerCardModal()" class="btn btn-secondary">취소</button>
+                <button onclick="calculator.applyPartnerCard()" class="btn btn-primary">적용</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../script.js"></script>
+    <script src="../product-modal.js"></script>
+</body>
+</html>
