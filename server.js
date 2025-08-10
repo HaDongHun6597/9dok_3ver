@@ -291,6 +291,50 @@ app.get('/api/partner-cards', async (req, res) => {
   }
 });
 
+// 구독 혜택 정보 조회
+app.get('/api/subscription-benefits', async (req, res) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query(`
+      SELECT id, name, management_type, search_keyword, icon_url, 
+             vertical_image_url, horizontal_image_url, video_url, html_url 
+      FROM subscription_benefits 
+      ORDER BY id
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('구독 혜택 조회 오류:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 특정 제품의 구독 혜택 조회 (제품군 기반)
+app.get('/api/subscription-benefits/:productCategory', async (req, res) => {
+  let conn;
+  try {
+    const productCategory = req.params.productCategory;
+    conn = await pool.getConnection();
+    
+    const rows = await conn.query(`
+      SELECT id, name, management_type, search_keyword, icon_url, 
+             vertical_image_url, horizontal_image_url, video_url, html_url 
+      FROM subscription_benefits 
+      WHERE search_keyword = ? OR name LIKE ?
+      ORDER BY id
+    `, [productCategory, `%${productCategory}%`]);
+    
+    res.json(rows);
+  } catch (err) {
+    console.error('제품별 구독 혜택 조회 오류:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 // 모델명으로 이미지 URL 조회
 app.get('/api/image/:model_name', async (req, res) => {
   let conn;

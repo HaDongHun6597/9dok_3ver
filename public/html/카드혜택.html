@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>카드</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .image-container {
+      display: none;
+      width: 100%;
+      height: 100vh;
+      position: relative;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .main-image {
+      height: 100vh;
+      width: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* ✅ 세로 모드 컨테이너 */
+    #portrait-container {
+      display: none;
+      width: 100%;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      -webkit-overflow-scrolling: touch;
+
+      display: block; /* ✅ flex 없이 block으로 강제 */
+    }
+
+    /* ✅ 세로 이미지 스타일 조정 */
+    #portrait-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 0; /* ✅ 상단 여백 제거 */
+    }
+  </style>
+</head>
+<body>
+
+  <div id="landscape-container" class="image-container">
+    <img class="main-image" src="https://img.lgemart.com/9dok/CARD.png" alt="가로 이미지">
+  </div>
+
+  <div id="portrait-container">
+    <img class="main-image" src="https://img.lgemart.com/9dok/CARD2-2.png" alt="세로 이미지">
+    
+  </div>
+
+  <script>
+    function updateLayout() {
+      const isLandscape = window.innerWidth > window.innerHeight;
+      const landscape = document.getElementById('landscape-container');
+      const portrait = document.getElementById('portrait-container');
+
+      landscape.style.display = isLandscape ? 'flex' : 'none';
+      portrait.style.display = isLandscape ? 'none' : 'block'; // ✅ block으로 정확히 설정
+
+      document.body.style.overflow = isLandscape ? 'hidden' : 'auto';
+      document.documentElement.style.overflow = isLandscape ? 'hidden' : 'auto';
+    }
+
+    updateLayout();
+    window.addEventListener('resize', updateLayout);
+  </script>
+
+</body>
+</html>

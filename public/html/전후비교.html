@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>서비스 전/후 비교</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: transparent; /* ✅ 검은색 배경을 투명으로 변경 */
+            width: 100%; /* iframe의 100% 너비 사용 */
+            height: 100%; /* iframe의 100% 높이 사용 */
+            overflow: auto; /* 내용이 넘치면 스크롤 허용 */
+            display: flex; /* 이미지를 중앙에 배치하기 위해 flexbox 사용 */
+            justify-content: center; /* 가로 중앙 정렬 */
+            align-items: center; /* 세로 중앙 정렬 */
+        }
+
+        .main-image {
+            display: block;
+            width: 100%; /* ✅ 이미지를 부모(body)의 가로 너비에 꽉 맞춤 (가장 중요) */
+            height: auto; /* 높이는 비율에 따라 자동 조절 */
+            max-width: 100%; /* 혹시 모를 오버플로우 방지 */
+            max-height: 100%; /* 혹시 모를 오버플로우 방지 */
+            object-fit: contain; /* 이미지가 잘리지 않고 비율 유지하며 축소 */
+            /* margin: 0 auto; Flexbox로 중앙 정렬하므로 필요 없음 */
+        }
+
+        /* 미디어 쿼리는 이제 .main-image의 width: 100%가 강력하게 적용되므로 중복될 수 있습니다.
+           하지만 명시적 제어를 위해 유지합니다. */
+        @media screen and (orientation: landscape) {
+            .main-image {
+                /* 가로 모드에서도 너비를 100%로 우선 적용하고 높이를 자동 조절 */
+                width: 100%;
+                height: auto;
+            }
+        }
+
+        @media screen and (orientation: portrait) {
+            .main-image {
+                /* 세로 모드에서도 너비를 100%로 우선 적용하고 높이를 자동 조절 */
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <img id="comparison-image" class="main-image" src="" alt="전후비교 이미지">
+
+    <script>
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        function updateImage() {
+            const product = getQueryParam("product");
+            if (!product) {
+                console.log("제품명이 지정되지 않았습니다.");
+                return;
+            }
+
+            const isLandscape = window.innerWidth > window.innerHeight;
+            const mode = isLandscape ? "가로" : "세로";
+            const imageUrl = `https://img.lgemart.com/9dok/전후비교/${mode}/${product}.png`;
+
+            const img = document.getElementById("comparison-image");
+            img.src = imageUrl;
+            img.alt = `${product} (${mode}) 서비스 전후 비교`;
+        }
+
+        updateImage();
+        window.addEventListener('resize', updateImage);
+    </script>
+
+</body>
+</html>

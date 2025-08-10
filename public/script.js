@@ -157,14 +157,19 @@ class SubscriptionCalculator {
         
         // 초기 HTML 구조 (폴백 아이콘으로 먼저 표시)
         card.innerHTML = `
-            <button class="product-remove-top" onclick="calculator.removeProduct(${index})">×</button>
+            <button class="product-remove-top" onclick="calculator.confirmRemoveProduct(${index})">×</button>
             <div class="product-header-content">
                 <div class="product-image">${getProductIcon(productGroup)}</div>
                 <div class="product-text-container">
-                    <div class="product-title">${product['모델명'] || '제품명 없음'}</div>
+                    <div class="product-title-row">
+                        <div class="product-title">${product['모델명'] || '제품명 없음'}</div>
+                    </div>
                     <div class="product-specs">
                         ${product['결합유형'] || '-'} | ${product['계약기간'] || '-'}<br>
                         ${product['관리유형'] || '관리없음'} | ${product['방문주기'] || '방문없음'}${prepaymentDisplay}
+                    </div>
+                    <div class="care-service-section">
+                        <button class="care-service-btn" onclick="calculator.openCareService(${index})">🛠️ 케어서비스</button>
                     </div>
                 </div>
             </div>
@@ -293,6 +298,17 @@ class SubscriptionCalculator {
         console.log('제품 추가됨:', product['모델명']);
     }
     
+    confirmRemoveProduct(index) {
+        const product = this.selectedProducts[index];
+        const productName = product['모델명'] || '제품';
+        
+        const message = `"${productName}"을(를) 삭제하시겠습니까?\n\n삭제 후에는 되돌릴 수 없습니다.`;
+        
+        this.showConfirmDialog('제품 삭제', message, () => {
+            this.removeProduct(index);
+        });
+    }
+
     async removeProduct(index) {
         console.log('제품 제거:', index);
         this.selectedProducts.splice(index, 1);
@@ -313,6 +329,44 @@ class SubscriptionCalculator {
             this.modal.openModalForEdit(product, index);
         } else {
             console.error('모달이 초기화되지 않음');
+        }
+    }
+
+    // 케어서비스 열기 메서드
+    async openCareService(productIndex) {
+        try {
+            const product = this.selectedProducts[productIndex];
+            if (!product) {
+                alert('제품 정보를 찾을 수 없습니다.');
+                return;
+            }
+
+            const benefitCode = product['혜택구분자'];
+            if (!benefitCode) {
+                alert('이 제품의 케어서비스 정보가 없습니다.');
+                return;
+            }
+
+            console.log('혜택구분자:', benefitCode);
+
+            // 구독 혜택 정보 조회
+            const response = await fetch('/api/subscription-benefits');
+            const benefits = await response.json();
+            
+            // 혜택구분자와 검색용 필드 매칭
+            const matchedBenefit = benefits.find(benefit => benefit.search_keyword === benefitCode);
+            
+            console.log('매칭된 혜택:', matchedBenefit);
+            
+            if (matchedBenefit && matchedBenefit.html_url) {
+                // HTML URL로 새 창 열기
+                window.open(matchedBenefit.html_url, '_blank');
+            } else {
+                alert('이 제품의 케어서비스 페이지를 찾을 수 없습니다.');
+            }
+        } catch (error) {
+            console.error('케어서비스 조회 오류:', error);
+            alert('케어서비스 정보를 불러오는 중 오류가 발생했습니다.');
         }
     }
     
@@ -362,31 +416,41 @@ class SubscriptionCalculator {
             
             container.innerHTML = '<div class="step-info">1단계: 카드사를 선택해주세요</div>';
             
-            // 제휴카드 없음 옵션 추가
-            const noneOption = document.createElement('div');
-            noneOption.className = 'partner-card-option';
-            noneOption.innerHTML = `
-                <div class="card-info">
-                    <div class="card-name">제휴카드 없음</div>
-                    <div class="card-discount">혜택없음</div>
-                </div>
-            `;
-            noneOption.addEventListener('click', () => {
-                this.applyNoPartnerCard();
+            // 추천 카드 목록
+            const recommendedCards = ['신한', '롯데', '우리', '국민'];
+            
+            // 카드사 정렬: 추천 카드 우선, 나머지는 가나다순
+            const sortedCardNames = Object.keys(cardGroups).sort((a, b) => {
+                const aIsRecommended = recommendedCards.includes(a);
+                const bIsRecommended = recommendedCards.includes(b);
+                
+                if (aIsRecommended && !bIsRecommended) return -1;
+                if (!aIsRecommended && bIsRecommended) return 1;
+                if (aIsRecommended && bIsRecommended) {
+                    return recommendedCards.indexOf(a) - recommendedCards.indexOf(b);
+                }
+                return a.localeCompare(b);
             });
-            container.appendChild(noneOption);
             
             // 카드사 옵션들
-            Object.keys(cardGroups).forEach(cardName => {
+            sortedCardNames.forEach(cardName => {
+                const isRecommended = recommendedCards.includes(cardName);
                 const cardElement = document.createElement('div');
                 cardElement.className = 'partner-card-option';
                 
                 cardElement.innerHTML = `
                     <div class="card-info">
-                        <div class="card-name">${cardName} 카드</div>
+                        <div class="card-name">
+                            ${isRecommended ? '<span class="recommended-icon">🌟</span> ' : ''}${cardName} 카드
+                            ${isRecommended ? '<span class="recommended-badge">추천</span>' : ''}
+                        </div>
                         <div class="card-discount">${cardGroups[cardName].length}개 옵션</div>
                     </div>
                 `;
+                
+                if (isRecommended) {
+                    cardElement.classList.add('recommended');
+                }
                 
                 // 현재 선택된 제휴카드가 이 카드사인지 확인
                 const product = this.selectedProducts[this.currentProductIndex];
@@ -402,6 +466,20 @@ class SubscriptionCalculator {
                 
                 container.appendChild(cardElement);
             });
+            
+            // 제휴카드 없음 옵션을 가장 마지막에 추가
+            const noneOption = document.createElement('div');
+            noneOption.className = 'partner-card-option no-card-option';
+            noneOption.innerHTML = `
+                <div class="card-info">
+                    <div class="card-name">제휴카드 없음</div>
+                    <div class="card-discount">혜택없음</div>
+                </div>
+            `;
+            noneOption.addEventListener('click', () => {
+                this.applyNoPartnerCard();
+            });
+            container.appendChild(noneOption);
             
         } catch (error) {
             console.error('제휴카드 데이터 로딩 실패:', error);
@@ -858,6 +936,46 @@ class SubscriptionCalculator {
         
         document.body.appendChild(alertModal);
     }
+
+    // 확인 대화상자
+    showConfirmDialog(title, message, onConfirm) {
+        // 기존 대화상자가 있으면 제거
+        const existingDialog = document.getElementById('confirmDialog');
+        if (existingDialog) existingDialog.remove();
+        
+        const dialogModal = document.createElement('div');
+        dialogModal.id = 'confirmDialog';
+        dialogModal.className = 'modal custom-alert';
+        dialogModal.style.display = 'block';
+        
+        dialogModal.innerHTML = `
+            <div class="modal-content custom-alert-content" style="max-width: 400px; margin: 15% auto;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #ff5252, #d32f2f);">
+                    <h2 style="margin: 0; color: white;">${title}</h2>
+                </div>
+                <div class="modal-body" style="padding: 20px; white-space: pre-line; font-size: 14px; line-height: 1.6;">
+                    ${message}
+                </div>
+                <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('confirmDialog').remove()">취소</button>
+                    <button class="btn btn-danger" onclick="calculator.executeConfirmedAction()">삭제</button>
+                </div>
+            </div>
+        `;
+        
+        // 확인 콜백 저장
+        this.pendingConfirmAction = onConfirm;
+        
+        document.body.appendChild(dialogModal);
+    }
+
+    executeConfirmedAction() {
+        if (this.pendingConfirmAction) {
+            this.pendingConfirmAction();
+            this.pendingConfirmAction = null;
+        }
+        document.getElementById('confirmDialog').remove();
+    }
     
     // 결합유형에 따른 옵션 필터링
     filterCombinationTypeOptions() {
@@ -871,20 +989,10 @@ class SubscriptionCalculator {
         }
     }
 
-    // 추가혜택 세부사항 토글 기능
+    // 추가혜택 세부사항 토글 기능 (더 이상 사용하지 않음 - 항상 표시)
     toggleBenefitDetails() {
-        const benefitDetails = document.getElementById('benefitDetails');
-        const benefitArrow = document.getElementById('benefitArrow');
-        
-        if (benefitDetails.style.display === 'none') {
-            benefitDetails.style.display = 'block';
-            benefitArrow.classList.add('rotated');
-            benefitArrow.textContent = '▲';
-        } else {
-            benefitDetails.style.display = 'none';
-            benefitArrow.classList.remove('rotated');
-            benefitArrow.textContent = '▼';
-        }
+        // 더 이상 사용하지 않는 함수 (항상 펼침 상태 유지)
+        console.log('추가혜택 토글 기능이 비활성화되었습니다.');
     }
 
     // 선납금액 섹션 업데이트
@@ -1018,8 +1126,116 @@ class SubscriptionCalculator {
 
 // 페이지 로드 시 초기화
 let calculator;
+// 구독 혜택 관련 기능
+const subscriptionBenefits = {
+    init() {
+        const benefitsBtn = document.getElementById('subscriptionBenefitsBtn');
+        if (benefitsBtn) {
+            benefitsBtn.addEventListener('click', this.openBenefitsModal.bind(this));
+        }
+    },
+
+    async openBenefitsModal() {
+        try {
+            const response = await fetch('/api/subscription-benefits');
+            const benefits = await response.json();
+            
+            this.renderBenefitsGrid(benefits);
+            
+            const modal = document.getElementById('subscriptionBenefitsModal');
+            modal.style.display = 'block';
+        } catch (error) {
+            console.error('구독 혜택 로드 오류:', error);
+            alert('구독 혜택을 불러오는 중 오류가 발생했습니다.');
+        }
+    },
+
+    renderBenefitsGrid(benefits) {
+        const grid = document.getElementById('benefitsGrid');
+        grid.innerHTML = '';
+
+        benefits.forEach(benefit => {
+            const benefitElement = document.createElement('div');
+            benefitElement.className = 'benefit-item';
+            benefitElement.onclick = () => this.openBenefitDetail(benefit);
+
+            const img = benefit.icon_url ? `<img src="${benefit.icon_url}" alt="${benefit.name}" onerror="this.style.display='none'">` : '';
+            
+            benefitElement.innerHTML = `
+                ${img}
+                <div class="benefit-name">${benefit.name}</div>
+            `;
+
+            grid.appendChild(benefitElement);
+        });
+    },
+
+    async openBenefitDetail(benefit) {
+        try {
+            const modal = document.getElementById('benefitDetailModal');
+            const title = document.getElementById('benefitDetailTitle');
+            const content = document.getElementById('benefitDetailContent');
+
+            title.textContent = benefit.name + ' 혜택';
+            
+            if (benefit.html_url) {
+                // HTML URL이 있으면 새 창으로 열기
+                window.open(benefit.html_url, '_blank');
+                closeBenefitDetailModal();
+                return;
+            } else {
+                // HTML URL이 없으면 기본 정보 표시
+                let detailHTML = `<h3>${benefit.name}</h3>`;
+                
+                if (benefit.vertical_image_url) {
+                    detailHTML += `<img src="${benefit.vertical_image_url}" alt="${benefit.name}" style="max-width: 100%; height: auto; margin: 20px 0;">`;
+                }
+                
+                if (benefit.video_url) {
+                    detailHTML += `<div style="margin: 20px 0;"><iframe src="${benefit.video_url}" width="100%" height="315" frameborder="0" allowfullscreen></iframe></div>`;
+                }
+                
+                detailHTML += `<p>구독 시 ${benefit.name}에 대한 전문 케어 서비스를 받으실 수 있습니다.</p>`;
+                
+                content.innerHTML = detailHTML;
+            }
+
+            modal.style.display = 'block';
+        } catch (error) {
+            console.error('혜택 상세 정보 로드 오류:', error);
+            alert('혜택 상세 정보를 불러오는 중 오류가 발생했습니다.');
+        }
+    }
+};
+
+// 모달 닫기 함수들
+function closeBenefitsModal() {
+    document.getElementById('subscriptionBenefitsModal').style.display = 'none';
+}
+
+function closeBenefitDetailModal() {
+    document.getElementById('benefitDetailModal').style.display = 'none';
+}
+
+// 모달 외부 클릭 시 닫기 (기존 이벤트에 추가)
+window.addEventListener('click', function(event) {
+    const benefitsModal = document.getElementById('subscriptionBenefitsModal');
+    const detailModal = document.getElementById('benefitDetailModal');
+    
+    if (event.target === benefitsModal) {
+        closeBenefitsModal();
+    }
+    
+    if (event.target === detailModal) {
+        closeBenefitDetailModal();
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     calculator = new SubscriptionCalculator();
+    
+    // 구독 혜택 초기화
+    subscriptionBenefits.init();
     
     // 레이아웃 로딩 완료 표시
     const productsGrid = document.getElementById('productsGrid');

@@ -85,10 +85,13 @@ body {
 }
 
 .container {
-    max-width: 1400px;
-    margin: 0 auto;
+    max-width: none;
+    width: 100%;
+    margin: 0;
     background-color: white;
     min-height: 100vh;
+    padding: 0 20px;
+    box-sizing: border-box;
 }
 
 /* 헤더 */
@@ -117,9 +120,9 @@ body {
     letter-spacing: -0.5px;
     margin: 0 !important;
     padding: 0 !important;
-    position: fixed;
-    left: 10px;
-    top: 56px;
+    position: absolute;
+    left: 20px;
+    top: 50%;
     transform: translateY(-50%);
     z-index: 10;
 }
@@ -145,6 +148,131 @@ body {
     pointer-events: none;
     z-index: 1;
     user-select: none;
+}
+
+/* 제품 영역 헤더 */
+.products-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+/* 구독 혜택 버튼 */
+.subscription-benefits-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.subscription-benefits-btn:hover {
+    background: linear-gradient(135deg, #45a049, #4CAF50);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.benefits-icon {
+    font-size: 18px;
+}
+
+/* 구독 혜택 모달 */
+.benefits-modal-content {
+    width: 95vw !important;
+    height: 95vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 2.5vh auto !important;
+    position: relative;
+    top: 0 !important;
+    transform: none !important;
+}
+
+.benefits-modal-content .modal-body {
+    height: calc(95vh - 120px);
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* 혜택 그리드 */
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+/* 구독 혜택 모달의 혜택 버튼 */
+.benefits-grid .benefit-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    aspect-ratio: 1;
+}
+
+.benefits-grid .benefit-item:hover {
+    background: #e3f2fd;
+    border-color: #2196F3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+}
+
+.benefits-grid .benefit-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.benefits-grid .benefit-item .benefit-name {
+    display: none;
+}
+
+/* 혜택 상세 모달 */
+.benefit-detail-content {
+    width: 95vw !important;
+    height: 95vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 2.5vh auto !important;
+    position: relative;
+    top: 0 !important;
+    transform: none !important;
+}
+
+.benefit-detail-content .modal-body {
+    height: calc(95vh - 120px);
+    overflow-y: auto;
+    padding: 20px;
+}
+
+#benefitDetailContent {
+    width: 100%;
+}
+
+#benefitDetailContent iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+    border-radius: 8px;
 }
 
 .search-bar {
@@ -411,8 +539,35 @@ body {
 .product-specs {
     font-size: 12px;
     color: #666;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     line-height: 1.4;
+    text-align: center;
+}
+
+.care-service-section {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.care-service-section .care-service-btn {
+    background: #FF9800;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    width: auto;
+    text-align: center;
+}
+
+.care-service-section .care-service-btn:hover {
+    background: #F57C00;
+    transform: translateY(-1px);
 }
 
 .product-price {
@@ -566,13 +721,19 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 10;
-    opacity: 0.8;
+    opacity: 0;
     transition: all 0.3s;
+    pointer-events: none;
+}
+
+.product-card:hover .product-remove-top {
+    opacity: 0.8;
+    pointer-events: auto;
 }
 
 .product-remove-top:hover {
     background: #d32f2f;
-    opacity: 1;
+    opacity: 1 !important;
     transform: scale(1.1);
 }
 
@@ -1169,6 +1330,50 @@ body {
     background: #388e3c;
 }
 
+.care-service-btn {
+    background: #FF9800;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-left: 8px;
+}
+
+.care-service-btn:hover {
+    background: #F57C00;
+}
+
+.product-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.care-service-btn.compact {
+    background: #FF9800;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    height: fit-content;
+}
+
+.care-service-btn.compact:hover {
+    background: #F57C00;
+    transform: translateY(-1px);
+}
+
 .clickable-card {
     cursor: pointer;
 }
@@ -1264,6 +1469,74 @@ body {
 .partner-card-option.selected .card-discount {
     color: #ad1457;
     font-weight: 600;
+}
+
+.partner-card-option.recommended {
+    border-color: #FF6B35;
+    background: linear-gradient(135deg, #fff8f5, #fff2e8);
+    position: relative;
+}
+
+.partner-card-option.recommended:hover {
+    border-color: #FF6B35;
+    background: linear-gradient(135deg, #fff2e8, #ffecd9);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.15);
+}
+
+.recommended-icon {
+    font-size: 14px;
+    margin-right: 4px;
+}
+
+.recommended-badge {
+    background: #FF6B35;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+.partner-card-option.no-card-option {
+    border-color: #bbb;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    color: #6c757d;
+    opacity: 0.8;
+}
+
+.partner-card-option.no-card-option:hover {
+    border-color: #6c757d;
+    background: linear-gradient(135deg, #e9ecef, #dee2e6);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.15);
+    opacity: 1;
+}
+
+.partner-card-option.no-card-option .card-name {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.partner-card-option.no-card-option .card-discount {
+    color: #868e96;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+    border: 1px solid #dc3545;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    border-color: #bd2130;
 }
 
 .modal-body {

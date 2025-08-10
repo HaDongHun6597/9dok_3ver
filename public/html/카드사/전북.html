@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>구독 제휴카드</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .image-container {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #landscape-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        #landscape-container img {
+            height: 100vh;
+            width: auto;
+            display: block;
+        }
+
+        #portrait-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+
+        #portrait-container img {
+            width: 100%;
+            height: auto;
+            margin-top: 0;
+            display: block;
+        }
+
+        .floating-bar {
+            position: fixed;
+            bottom: 2vh;
+            left: 0;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 1vh 2vw;
+            padding: 0 4vw;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+
+        .floating-sidebar {
+            position: fixed;
+            right: 2vw;
+            bottom: 2vh;
+            display: none;
+            flex-direction: column;
+            gap: 0;
+            z-index: 10;
+            background: rgba(255,255,255,0.7);
+            padding: 0.5vh 1vw;
+            border-radius: 1vw;
+            height: auto;
+            justify-content: flex-start;
+        }
+
+        .floating-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.85);
+            color: #000;
+            /* border: 2px solid #444; 제거 */
+            text-align: center;
+            white-space: nowrap;
+            word-break: keep-all;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 14px;
+            margin-bottom: 0.3vh;
+        }
+
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 14px rgba(0,0,0,0.25);
+        }
+
+        .floating-button a {
+            color: inherit;
+            text-decoration: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        @media screen and (orientation: portrait) {
+            .floating-bar {
+                display: grid;
+            }
+
+            .floating-sidebar {
+                display: none;
+            }
+
+            .floating-button {
+                height: 44px;
+                font-size: 0.95rem;
+                padding: 6px 4px;
+            }
+
+            .close-button { /* 페이지 닫기 버튼 */
+                width: 28px;
+                height: 28px;
+                font-size: 20px;
+                line-height: 28px;
+                top: 8px;
+                right: 12px;
+            }
+        }
+
+        @media screen and (orientation: landscape) {
+            .floating-bar {
+                display: none;
+            }
+
+            .floating-sidebar {
+                display: flex;
+            }
+
+            .floating-button {
+                width: 8vw;
+                height: 4.5vh;
+                font-size: 0.85vw;
+                padding: 0.4vh 0.5vw;
+                border-radius: 0.8vw;
+                flex-direction: column;
+                background: rgba(255,255,255,0.8);
+            }
+
+            .close-button { /* 페이지 닫기 버튼 */
+                width: 3vw;
+                height: 3vw;
+                font-size: 2vw;
+                line-height: 3vw;
+                top: 1vh;
+                right: 1vw;
+            }
+        }
+
+        .close-button { /* 페이지 닫기 버튼 공통 스타일 */
+            position: fixed;
+            background: #fff;
+            color: #000;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            border-radius: 50%;
+            /* border: 2px solid #000; 제거 */
+            cursor: pointer;
+            text-align: center;
+            z-index: 10001;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* 그림자 추가 */
+        }
+
+        /* QR 오버레이 (모달 역할) 스타일 */
+        #qr-overlay {
+            display: none; /* 초기에는 숨김 */
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.8); /* 어두운 배경 */
+            z-index: 10002;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 오버레이 내 이미지 스타일 (이미지 자체에만 적용) */
+        #qr-overlay img {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 20px; /* 이미지 테두리 부드럽게 (모서리 깎기) */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* 이미지에 그림자 추가 */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="landscape-container" class="image-container">
+        <img src="https://img.lgemart.com/9dok/카드혜택/가로/전북.png" alt="가로 이미지">
+    </div>
+
+    <div id="portrait-container" class="image-container">
+        <img src="https://img.lgemart.com/9dok/카드혜택/세로/전북.png" alt="세로 이미지">
+    </div>
+
+    <div class="close-button" onclick="window.close()">×</div>
+
+    <div class="floating-bar">
+        <div class="floating-button"><a href="tel:15882331">📞 제휴카드 발급<br>1588-2331</a></div>
+        <div class="floating-button"><a href="tel:15884477">📞 고객센터<br>1588-4477</a></div>
+        <div class="floating-button"><a href="javascript:void(0)" onclick="showQR()">📲 카드 신청 QR</a></div>
+        <div class="floating-button">
+            <a href="https://www.jbbank.co.kr/NFF_CRCD_ALNC.act" target="_blank">🔗 카드 신청 링크</a>
+        </div>
+    </div>
+
+    <div class="floating-sidebar">
+        <div class="floating-button"><a href="tel:15882331">📞 제휴카드<br>1588-2331</a></div>
+        <div class="floating-button"><a href="tel:15884477">📞 고객센터<br>1588-4477</a></div>
+        <div class="floating-button"><a href="javascript:void(0)" onclick="showQR()">📲 카드 신청 QR</a></div>
+        <div class="floating-button">
+            <a href="https://www.jbbank.co.kr/NFF_CRCD_ALNC.act" target="_blank">🔗 카드 신청 링크</a>
+        </div>
+    </div>
+
+    <div id="qr-overlay">
+        <img src="https://img.lgemart.com/9dok/카드QR/전북.png" alt="카드 신청 QR">
+    </div>
+
+    <script>
+        function showQR() {
+            document.getElementById("qr-overlay").style.display = "flex";
+        }
+
+        function hideQR() {
+            document.getElementById("qr-overlay").style.display = "none";
+        }
+
+        // 모달 배경 클릭 시 닫기 기능
+        document.getElementById('qr-overlay').addEventListener('click', function(event) {
+            // 클릭된 요소가 오버레이 배경(qr-overlay) 자체이거나 이미지인 경우 (이미지를 클릭해도 닫히도록)
+            if (event.target === this || event.target.tagName === 'IMG') {
+                hideQR();
+            }
+        });
+
+        function updateLayout() {
+            const isLandscape = window.innerWidth > window.innerHeight;
+            document.getElementById('landscape-container').style.display = isLandscape ? 'flex' : 'none';
+            document.getElementById('portrait-container').style.display = isLandscape ? 'none' : 'flex';
+        }
+
+        window.addEventListener('resize', updateLayout);
+        window.addEventListener('load', updateLayout);
+    </script>
+
+</body>
+</html>

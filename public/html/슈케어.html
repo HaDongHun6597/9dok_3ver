@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>슈케어</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .image-container {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #landscape-container {
+            position: fixed; top: 0; left: 0;
+        }
+        #landscape-container .main-image {
+            height: 100vh;
+            width: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        #portrait-container {
+            position: absolute; top: 0; left: 0;
+            display: none;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%; height: 100%;
+            overflow: auto;
+            box-sizing: border-box;
+        }
+        #portrait-container .main-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .close-button {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 10000;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            font-size: 28px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            text-align: center;
+            line-height: 40px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0,0,0,0.4);
+            transition: background 0.3s;
+        }
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* --- 반응형 스타일 --- */
+        @media screen and (orientation: portrait) {
+            .close-button {
+                width: 28px;
+                height: 28px;
+                font-size: 20px;
+                line-height: 28px;
+                top: 8px;
+                right: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landscape-container" class="image-container">
+        <img class="main-image" src="https://img.lgemart.com/9dok/혜택2/jpg/슈케어.jpg" alt="슈케어 가로 이미지">
+    </div>
+
+    <div id="portrait-container" class="image-container">
+        <img class="main-image" src="https://img.lgemart.com/9dok/혜택/슈케어.png" alt="슈케어 세로 이미지">
+    </div>
+
+    <div class="close-button" id="pageClose" onclick="window.close()">×</div>
+    
+    <script>
+        function updateLayout() {
+            const isLandscape = window.innerWidth > window.innerHeight;
+            document.getElementById('landscape-container').style.display = isLandscape ? 'flex' : 'none';
+            document.getElementById('portrait-container').style.display = isLandscape ? 'none' : 'flex';
+        }
+
+        window.addEventListener('resize', updateLayout);
+        window.addEventListener('load', updateLayout);
+    </script>
+</body>
+</html>

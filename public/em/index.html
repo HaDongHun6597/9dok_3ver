@@ -31,13 +31,12 @@
                         <div class="benefit-price" id="normalPrice">0원</div>
                     </div>
                     
-                    <div class="benefit-item benefit-toggle" data-type="promotion" onclick="calculator.toggleBenefitDetails()">
+                    <div class="benefit-item" data-type="promotion">
                         <div class="benefit-header">
                             <div class="benefit-title">추가혜택</div>
-                            <div class="benefit-arrow" id="benefitArrow">▼</div>
                         </div>
                         <div class="benefit-price" id="promotionPrice">0원</div>
-                        <div class="benefit-details" id="benefitDetails" style="display: none;">
+                        <div class="benefit-details" id="benefitDetails">
                             <div class="benefit-detail" id="promotionDiscountDetail">• 프로모션할인: 0원</div>
                             <div class="benefit-detail" id="combinationDiscountDetail">• 결합할인: 0원</div>
                             <div class="benefit-detail" id="partnerCardDetail">• 제휴카드: 0원</div>
@@ -62,6 +61,12 @@
 
             <!-- 우측 제품 선택 영역 -->
             <main class="products-main">
+                <div class="products-header">
+                    <button id="subscriptionBenefitsBtn" class="subscription-benefits-btn">
+                        <span class="benefits-icon">🎁</span>
+                        <span>구독 혜택</span>
+                    </button>
+                </div>
                 <div class="products-grid" id="productsGrid">
                     <!-- 선택된 제품 카드들이 여기에 표시됩니다 -->
                     <div class="add-product-card" id="addProductCard">
@@ -179,6 +184,39 @@
             <div class="modal-footer">
                 <button onclick="calculator.closePartnerCardModal()" class="btn btn-secondary">취소</button>
                 <button onclick="calculator.applyPartnerCard()" class="btn btn-primary">적용</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 구독 혜택 모달 -->
+    <div id="subscriptionBenefitsModal" class="modal">
+        <div class="modal-content benefits-modal-content">
+            <div class="modal-header">
+                <h2>구독 혜택</h2>
+                <span class="close-btn" onclick="closeBenefitsModal()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <p>구독 시 받을 수 있는 다양한 케어 서비스 혜택을 확인해보세요.</p>
+                <div id="benefitsGrid" class="benefits-grid">
+                    <!-- 구독 혜택 버튼들이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 구독 혜택 상세 모달 -->
+    <div id="benefitDetailModal" class="modal">
+        <div class="modal-content benefit-detail-content">
+            <div class="modal-header">
+                <h2 id="benefitDetailTitle">혜택 상세</h2>
+                <span class="close-btn" onclick="closeBenefitDetailModal()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div id="benefitDetailContent">
+                    <!-- 상세 내용이 여기에 로드됩니다 -->
+                </div>
             </div>
         </div>
     </div>

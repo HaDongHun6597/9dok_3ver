@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>청소기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <style>
+        html, body {
+            margin: 0; padding: 0; background: #000;
+            width: 100%; height: 100%; overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .image-container {
+            display: none; width: 100vw; height: 100vh;
+            justify-content: center; align-items: center; overflow: hidden;
+        }
+        #landscape-container { position: fixed; top: 0; left: 0; }
+        #landscape-container img { height: 100vh; width: auto; display: block; }
+        #portrait-container {
+            position: absolute; top: 0; left: 0; display: none;
+            flex-direction: column; justify-content: flex-start; align-items: center;
+            width: 100%; height: 100%; overflow: auto; padding-bottom: 12vh;
+            box-sizing: border-box; background: #fff;
+        }
+        #portrait-container img { width: 100%; height: auto; display: block; }
+        
+        .button {
+            cursor: pointer; background: rgba(0, 0, 0, 0.6); color: #fff;
+            border: 2px solid #fff; border-radius: 50%; display: flex;
+            justify-content: center; align-items: center; font-family: Arial, sans-serif;
+            font-weight: bold; box-shadow: 0 0 8px rgba(0,0,0,0.4); transition: background 0.3s;
+        }
+        .button:hover { background: rgba(255, 255, 255, 0.3); }
+
+        .close-button {
+            position: fixed; top: 16px; right: 16px; z-index: 10000;
+            width: 40px; height: 40px; font-size: 28px; line-height: 40px;
+        }
+
+        .floating-bar {
+            position: fixed; bottom: 2vh; left: 0; width: 100%;
+            display: grid; grid-template-columns: 1fr 1fr; /* 버튼 2개에 맞게 수정 */
+            grid-gap: 1vh 2vw; padding: 0 4vw; z-index: 10; box-sizing: border-box;
+        }
+        .floating-sidebar {
+            position: fixed; right: 2vw; bottom: 3vh;
+            display: none; z-index: 10;
+        }
+        .floating-button {
+            display: flex; justify-content: center; align-items: center;
+            background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.25); color: #000;
+            text-align: center; white-space: nowrap; word-break: keep-all;
+            font-weight: 600; transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 14px; gap: 8px; padding: 0 10px;
+        }
+        .floating-button:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0,0,0,0.3); }
+        
+        .modal {
+            display: none; position: fixed; z-index: 9999; top: 0; left: 0;
+            width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85);
+            justify-content: center; align-items: center; overflow: auto;
+        }
+        .modal-inner {
+            display: flex; justify-content: center; align-items: center; position: relative;
+            width: auto; max-width: 80vw; max-height: 95vh; margin: auto;
+        }
+        .video-modal .modal-inner {
+            width: 80vw; height: 80vh; border-radius: 16px; overflow: hidden;
+            max-width: none; max-height: none;
+        }
+        .video-modal iframe { width: 100%; height: 100%; border: none; }
+        .image-wrapper {
+            position: relative; display: inline-block; line-height: 0;
+            border-radius: 16px; overflow: hidden; max-width: 100%; max-height: 100%;
+        }
+        .image-wrapper img { max-width: 100%; max-height: 95vh; height: auto; display: block; }
+        .modal-close-button {
+            position: absolute; top: 10px; right: 10px; z-index: 10;
+            width: 35px; height: 35px; font-size: 24px;
+        }
+
+        @media screen and (orientation: landscape) {
+            .floating-bar { display: none; }
+            .floating-sidebar { display: flex; flex-direction: row; gap: 0.5vw; }
+            .floating-button { width: auto; padding: 0 1.2vw; height: 5vh; min-height: 40px; font-size: 0.9vw; }
+        }
+        @media screen and (orientation: portrait) {
+            .close-button { width: 28px; height: 28px; font-size: 20px; line-height: 28px; top: 8px; right: 12px; }
+            .floating-bar { display: grid; }
+            .floating-sidebar { display: none; }
+            .floating-button { height: 48px; font-size: 0.9rem; }
+            .video-modal .modal-inner { width: 95vw; height: 85vh; }
+            .image-modal .modal-inner { max-width: 95vw; }
+            .modal-close-button { top: 5px; right: 5px; width: 30px; height: 30px; font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landscape-container" class="image-container">
+        <img src="https://img.lgemart.com/9dok/혜택2/jpg/청소기.jpg" alt="청소기 가로 이미지">
+    </div>
+
+    <div id="portrait-container" class="image-container">
+        <img src="https://img.lgemart.com/9dok/혜택/청소기.png" alt="청소기 세로 이미지">
+    </div>
+
+    <button type="button" id="pageClose" class="button close-button">×</button>
+    
+    <div class="floating-bar">
+        <button type="button" id="videoBtnBar" class="floating-button">🎬 혜택 영상</button>
+        <button type="button" id="paymentBtnBar" class="floating-button">📊 지불가치</button>
+    </div>
+
+    <div class="floating-sidebar">
+        <button type="button" id="videoBtnSidebar" class="floating-button">🎬 혜택 영상</button>
+        <button type="button" id="paymentBtnSidebar" class="floating-button">📊 지불가치</button>
+    </div>
+
+    <div id="videoModal" class="modal video-modal">
+        <div class="modal-inner">
+            <iframe id="youtubeFrame" src="" allowfullscreen></iframe>
+            <button type="button" class="button modal-close-button">×</button>
+        </div>
+    </div>
+    <div id="paymentValueModal" class="modal image-modal">
+        <div class="modal-inner">
+            <div class="image-wrapper">
+                <img id="paymentValueImage" src="" alt="지불가치 이미지">
+                <button type="button" class="button modal-close-button">×</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const product = "청소기";
+
+            const landscapeContainer = document.getElementById('landscape-container');
+            const portraitContainer = document.getElementById('portrait-container');
+            const pageCloseBtn = document.getElementById('pageClose');
+            
+            const videoModal = document.getElementById('videoModal');
+            const paymentValueModal = document.getElementById('paymentValueModal');
+            
+            const youtubeFrame = document.getElementById('youtubeFrame');
+            const paymentValueImage = document.getElementById('paymentValueImage');
+
+            function updateLayout() {
+                const isLandscape = window.innerWidth > window.innerHeight;
+                landscapeContainer.style.display = isLandscape ? 'flex' : 'none';
+                portraitContainer.style.display = isLandscape ? 'none' : 'flex';
+            }
+
+            function showVideo() {
+                youtubeFrame.src = "https://www.youtube.com/embed/2HnubBEH2NU?si=OdaxuEfHcHJCNAki";
+                videoModal.style.display = "flex";
+                pageCloseBtn.style.display = "none";
+            }
+
+            function showImageModal(modal, imageElement, imageUrl) {
+                imageElement.src = imageUrl;
+                modal.style.display = "flex";
+                pageCloseBtn.style.display = "none";
+            }
+
+            function closeModal(modal, contentElement) {
+                modal.style.display = "none";
+                if (contentElement && contentElement.tagName === 'IFRAME') {
+                    contentElement.src = "";
+                }
+                pageCloseBtn.style.display = "block";
+            }
+            
+            window.addEventListener('resize', updateLayout);
+            updateLayout();
+
+            pageCloseBtn.addEventListener('click', () => window.close());
+            
+            const addClickListeners = (videoId, paymentId) => {
+                document.getElementById(videoId).addEventListener('click', showVideo);
+                
+                document.getElementById(paymentId).addEventListener('click', () => {
+                    const mode = window.innerWidth > window.innerHeight ? "가로" : "세로";
+                    const url = `https://img.lgemart.com/9dok/지불가치/${mode}/${product}.png`;
+                    showImageModal(paymentValueModal, paymentValueImage, url);
+                });
+            };
+
+            addClickListeners('videoBtnBar', 'paymentBtnBar');
+            addClickListeners('videoBtnSidebar', 'paymentBtnSidebar');
+
+            videoModal.addEventListener('click', () => closeModal(videoModal, youtubeFrame));
+            paymentValueModal.addEventListener('click', () => closeModal(paymentValueModal));
+            
+            videoModal.querySelector('.modal-inner').addEventListener('click', e => e.stopPropagation());
+            paymentValueModal.querySelector('.modal-inner').addEventListener('click', e => e.stopPropagation());
+
+            videoModal.querySelector('.modal-close-button').addEventListener('click', () => closeModal(videoModal, youtubeFrame));
+            paymentValueModal.querySelector('.modal-close-button').addEventListener('click', () => closeModal(paymentValueModal));
+        });
+    </script>
+</body>
+</html>

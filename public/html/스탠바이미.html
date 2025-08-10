@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>스탠바이미</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .image-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        #landscape-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+        #landscape-container img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+
+        #portrait-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%; 
+            height: 100%;
+            overflow: hidden;
+            padding: 0;
+            box-sizing: border-box;
+            background: #fff;
+        }
+        #portrait-container img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+        
+        .close-button {
+            display: none;
+        }
+
+        .floating-bar {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 30px;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+        .floating-sidebar {
+            display: none;
+        }
+        .floating-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            text-align: center;
+            white-space: nowrap;
+            word-break: keep-all;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 25px;
+            padding: 12px 24px;
+            gap: 8px;
+            font-size: 16px;
+        }
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        /* --- 모달 스타일 --- */
+        .video-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-inner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 80vw;
+            height: 80vh;
+        }
+
+        .video-modal .modal-inner {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .video-modal iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            width: 35px;
+            height: 35px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .modal-close-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* --- 반응형 스타일 --- */
+        @media screen and (max-width: 768px) {
+            .image-container {
+                padding: 10px;
+            }
+            .floating-button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landscape-container" class="image-container">
+        <img src="https://img.lgemart.com/9dok/혜택2/jpg/스탠바이미.jpg" alt="스탠바이미 가로 이미지">
+    </div>
+
+    <div id="portrait-container" class="image-container">
+        <img src="https://img.lgemart.com/9dok/혜택/스탠바이미.png" alt="스탠바이미 세로 이미지">
+    </div>
+
+    <div class="floating-bar">
+        <div class="floating-button" onclick="showVideo()">🎬 혜택 영상</div>
+    </div>
+
+    <div class="video-modal" id="videoModal" onclick="closeModal()">
+        <div class="modal-inner" onclick="event.stopPropagation()">
+            <iframe id="youtubeFrame" src="" allowfullscreen></iframe>
+            <div class="modal-close-button" onclick="closeModal()">×</div>
+        </div>
+    </div>
+    
+    <script>
+        function updateLayout() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const isWide = windowWidth > windowHeight;
+            
+            // 화면 비율에 따라 적절한 이미지 선택
+            const landscapeContainer = document.getElementById('landscape-container');
+            const portraitContainer = document.getElementById('portrait-container');
+            
+            if (isWide) {
+                landscapeContainer.style.display = 'flex';
+                portraitContainer.style.display = 'none';
+            } else {
+                landscapeContainer.style.display = 'none';
+                portraitContainer.style.display = 'flex';
+            }
+        }
+
+        function showVideo() {
+            document.getElementById("videoModal").style.display = "flex";
+            document.getElementById("youtubeFrame").src = "https://www.youtube.com/embed/1I8MTi5CBHM?si=uEOF1OUvQQ4hrxUf";
+        }
+
+        function closeModal() {
+            const modal = document.getElementById("videoModal");
+            const content = document.getElementById("youtubeFrame");
+            
+            modal.style.display = "none";
+            content.src = "";
+        }
+
+        // iframe 내에서의 리사이즈 감지를 위한 추가 이벤트
+        function checkAndUpdateLayout() {
+            updateLayout();
+            // iframe 로드 후 약간의 지연을 두고 다시 체크
+            setTimeout(updateLayout, 100);
+            setTimeout(updateLayout, 500);
+        }
+        
+        window.addEventListener('resize', checkAndUpdateLayout);
+        window.addEventListener('load', checkAndUpdateLayout);
+        
+        // iframe 내에서 실행될 때를 위한 추가 체크
+        if (window.self !== window.top) {
+            // iframe 환경에서 주기적으로 레이아웃 체크
+            setInterval(updateLayout, 1000);
+        }
+    </script>
+</body>
+</html>
