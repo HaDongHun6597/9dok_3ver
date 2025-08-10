@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  subscription-app:
+    build: .
+    restart: always
+    container_name: subscription-app
+    ports:
+      - "9074:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
