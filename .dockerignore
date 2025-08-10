@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+작업내역.md
+*.csv
+*.png
+scripts/
+test-connection.js
+create-partner-table.js
+import-partner-cards.js
+update-csv.js
