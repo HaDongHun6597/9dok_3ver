@@ -5,7 +5,7 @@ services:
     restart: always
     container_name: subscription-app
     ports:
-      - "9074:3000"
+      - "9074:3008"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=3008

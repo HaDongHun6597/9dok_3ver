@@ -11,8 +11,8 @@ RUN npm ci --only=production
 # 소스 코드 복사
 COPY . .
 
-# 포트 3000 노출
-EXPOSE 3000
+# 포트 3008 노출
+EXPOSE 3008
 
 # 애플리케이션 실행
 CMD ["node", "server.js"]
