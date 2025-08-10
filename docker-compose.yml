@@ -8,4 +8,3 @@ services:
       - "9074:3008"
     environment:
       - NODE_ENV=production
-      - PORT=3008
