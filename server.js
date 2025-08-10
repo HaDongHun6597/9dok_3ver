@@ -14,7 +14,14 @@ app.use(express.json());
 app.use('/em', express.static('public/em'));        // 이마트
 app.use('/hp', express.static('public/hp'));        // 홈플러스  
 app.use('/et', express.static('public/et'));        // 전자랜드
-app.use('/', express.static('public'));             // 기본 정적 파일
+
+// 공통 리소스 (폰트, 이미지 등)
+app.use('/fonts', express.static('public/fonts'));
+app.use('/html', express.static('public/html'));
+app.use('/shared', express.static('public/shared'));
+app.use('/style.css', express.static('public/style.css'));
+app.use('/script.js', express.static('public/script.js'));
+app.use('/product-modal.js', express.static('public/product-modal.js'));
 
 // 기본 루트는 채널 선택 페이지 표시
 app.get('/', (req, res) => {
