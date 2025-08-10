@@ -1,3 +1,12 @@
+/* 달무리 폰트 정의 */
+@font-face {
+    font-family: 'Dalmoori';
+    src: url('./fonts/dalmoori.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* 프리텐다드 폰트 정의 */
 @font-face {
     font-family: 'Pretendard';
@@ -86,21 +95,56 @@ body {
 .header {
     background: linear-gradient(135deg, #e91e63, #ad1457);
     color: white;
-    padding: 20px 0;
+    padding: 40px 0;
+    position: relative;
+    overflow: visible;
 }
 
 .header-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 !important;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    position: relative;
 }
 
 .header h1 {
-    font-size: 28px;
-    font-weight: 700;
+    font-family: 'Dalmoori', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 32px;
+    font-weight: normal;
+    letter-spacing: -0.5px;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: fixed;
+    left: 10px;
+    top: 56px;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.header h1 .channel-version {
+    font-size: 22px;
+    font-weight: 300;
+    opacity: 0.8;
+}
+
+/* 워터마크 시그니처 */
+.watermark-signature {
+    position: fixed;
+    bottom: 30px;
+    right: 50%;
+    transform: translateX(50%);
+    font-family: 'Dalmoori', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: rgba(0, 0, 0, 0.1);
+    letter-spacing: 1px;
+    font-style: italic;
+    pointer-events: none;
+    z-index: 1;
+    user-select: none;
 }
 
 .search-bar {
@@ -147,6 +191,8 @@ body {
     border-radius: 12px;
     padding: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .calculator-header {
@@ -164,6 +210,7 @@ body {
 
 .benefit-section {
     padding: 20px;
+    flex: 1;
 }
 
 .benefit-item {

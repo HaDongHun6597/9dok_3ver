@@ -259,15 +259,20 @@ class SubscriptionCalculator {
             `;
         }
         
-        // 기본 혜택 기간이 있는 경우 (프로모션 기간 이후)
+        // 기본 혜택 기간이 있는 경우
         if (periodInfo.basicPeriod > 0) {
+            const startMonth = periodInfo.promotionPeriod > 0 ? periodInfo.promotionPeriod + 1 : 1;
+            const periodLabel = periodInfo.promotionPeriod > 0 
+                ? `${startMonth}~${periodInfo.totalMonths}개월`
+                : `${periodInfo.totalMonths}개월간`;
+                
             pricingHTML += `
                 <div class="price-item discount basic-period">
-                    <span class="price-label">월 카드혜택 (${periodInfo.promotionPeriod + 1}~${periodInfo.totalMonths}개월)</span>
+                    <span class="price-label">월 카드혜택 (${periodLabel})</span>
                     <span class="price-value discount-value">-${this.formatPrice(Math.min(partnerCard.basicDiscount, monthlyFee))}</span>
                 </div>
                 <div class="price-item final-price basic-final">
-                    <span class="price-label">월 혜택가격 (${periodInfo.promotionPeriod + 1}~${periodInfo.totalMonths}개월)</span>
+                    <span class="price-label">월 혜택가격 (${periodLabel})</span>
                     <span class="price-value final-value">${this.formatPrice(Math.max(0, monthlyFee - partnerCard.basicDiscount))}</span>
                 </div>
             `;
@@ -651,18 +656,32 @@ class SubscriptionCalculator {
             partnerCard
         });
         
-        if (!partnerCard || !partnerCard.promotionMonths) {
-            console.log('프로모션 기간 정보 없음, 기본값 반환');
+        if (!partnerCard) {
+            console.log('제휴카드 정보 없음');
             return {
-                promotionDiscount: partnerCard ? partnerCard.promotionDiscount : 0,
-                basicDiscount: partnerCard ? partnerCard.basicDiscount : 0,
+                promotionDiscount: 0,
+                basicDiscount: 0,
                 promotionPeriod: 0,
-                basicPeriod: 0
+                basicPeriod: 0,
+                totalMonths: 0
             };
         }
         
         // 계약기간을 개월로 변환
         const contractMonths = parseInt(contractPeriod.replace('년', '')) * 12;
+        
+        // 프로모션 기간이 없는 경우 전체 계약기간 동안 기본 할인 적용
+        if (!partnerCard.promotionMonths || partnerCard.promotionMonths === 0) {
+            console.log('프로모션 기간 없음, 전체 계약기간 동안 기본 할인 적용');
+            return {
+                promotionDiscount: partnerCard.promotionDiscount || 0,
+                basicDiscount: partnerCard.basicDiscount || 0,
+                promotionPeriod: 0,
+                basicPeriod: contractMonths,
+                totalMonths: contractMonths
+            };
+        }
+        
         const promotionMonths = partnerCard.promotionMonths;
         
         let promotionPeriod = 0;
