@@ -262,6 +262,7 @@ app.get('/api/partner-cards', async (req, res) => {
     const rows = await conn.query(`
       SELECT id, 카드, 사용금액, 카드혜택, 기본혜택, 프로모션혜택, 프로모션개월, 비고
       FROM partner_cards 
+      WHERE 카드 != '사용안함'
       ORDER BY 카드, 사용금액
     `);
     res.json(rows);
