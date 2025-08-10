@@ -94,7 +94,7 @@ class SubscriptionCalculator {
         // 선택된 제품들을 각각 개별 카드로 표시 (같은 제품이라도 각각 다른 제휴카드 적용 가능)
         for (const [index, product] of this.selectedProducts.entries()) {
             const productCard = await this.createProductCard(product, index);
-            productsGrid.insertBefore(productCard, addProductCard);
+            productsGrid.appendChild(productCard); // 일단 맨 뒤에 추가
             
             // 폰트 크기 조정
             const productTitleElement = productCard.querySelector('.product-title');
@@ -102,6 +102,9 @@ class SubscriptionCalculator {
                 this.adjustFontSizeToFit(productTitleElement);
             }
         }
+        
+        // 제품 추가 버튼 위치 동적 조정
+        this.repositionAddButton();
         
         // 제품 추가 버튼이 항상 보이도록 확인
         if (addProductCard) {
@@ -945,6 +948,53 @@ class SubscriptionCalculator {
         const match = usageText.match(/(\d+)만원/);
         return match ? parseInt(match[1]) : 0;
     }
+
+    // 제품 추가 버튼 위치 동적 조정
+    repositionAddButton() {
+        const productsGrid = document.getElementById('productsGrid');
+        const addProductCard = document.getElementById('addProductCard');
+        
+        if (!productsGrid || !addProductCard) return;
+        
+        // 현재 제품 카드들의 개수 확인
+        const productCards = productsGrid.querySelectorAll('.product-card:not(.add-product-card)');
+        const totalCards = productCards.length;
+        
+        console.log(`제품 카드 수: ${totalCards}`);
+        
+        if (totalCards === 0) {
+            // 제품이 없으면 기본 위치 (첫 번째)
+            console.log('제품 없음 - 기본 위치');
+            return;
+        }
+        
+        // 컨테이너 너비 기반으로 한 줄에 들어갈 수 있는 카드 수 계산
+        const gridWidth = productsGrid.offsetWidth;
+        const cardWidth = 320; // 고정 카드 너비 + gap 고려
+        const gap = 25;
+        const effectiveCardWidth = cardWidth + gap;
+        const cardsPerRow = Math.floor((gridWidth + gap) / effectiveCardWidth);
+        
+        console.log(`그리드 너비: ${gridWidth}px, 한 줄당 카드 수: ${cardsPerRow}`);
+        
+        // 실제 카드 크기 계산
+        const sampleCard = productCards[0];
+        const actualCardWidth = sampleCard ? sampleCard.offsetWidth : 400;
+        const actualCardsPerRow = Math.floor(gridWidth / actualCardWidth);
+        
+        console.log(`실제 카드 너비: ${actualCardWidth}px, 실제 한 줄당 카드 수: ${actualCardsPerRow}`);
+        
+        // 현재 제품 수 + 추가버튼이 한 줄에 들어갈 수 있는지 확인
+        const totalWithButton = totalCards + 1;
+        
+        if (totalWithButton <= actualCardsPerRow) {
+            console.log(`${totalCards}개 제품 + 추가버튼 = ${totalWithButton}개가 ${actualCardsPerRow}개 자리에 들어감 - 우측 배치`);
+            productsGrid.appendChild(addProductCard);
+        } else {
+            console.log(`${totalCards}개 제품 + 추가버튼 = ${totalWithButton}개가 ${actualCardsPerRow}개 자리에 못 들어감 - 새 줄 배치`);
+            productsGrid.appendChild(addProductCard);
+        }
+    }
 }
 
 // 페이지 로드 시 초기화
@@ -957,4 +1007,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (productsGrid) {
         productsGrid.classList.add('loaded');
     }
+    
+    // 화면 크기 변경 시 제품 추가 버튼 위치 재조정
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            if (calculator) {
+                calculator.repositionAddButton();
+            }
+        }, 100);
+    });
 });

@@ -258,13 +258,31 @@ app.get('/api/product-options/:field', async (req, res) => {
 app.get('/api/partner-cards', async (req, res) => {
   let conn;
   try {
+    // 채널 감지 및 필터 조건 설정
+    const channel = getChannelFromRequest(req);
+    
     conn = await pool.getConnection();
-    const rows = await conn.query(`
+    let query = `
       SELECT id, 카드, 사용금액, 카드혜택, 기본혜택, 프로모션혜택, 프로모션개월, 비고
       FROM partner_cards 
       WHERE 카드 != '사용안함'
-      ORDER BY 카드, 사용금액
-    `);
+    `;
+    
+    // 채널별 추가 필터 조건
+    if (channel === 'em') {
+      // 이마트: 교원열이 비어있는 카드만
+      query += ` AND (교원 IS NULL OR 교원 = '')`;
+    } else if (channel === 'hp') {
+      // 홈플러스: 향후 추가 조건 설정 가능
+      // query += ` AND (홈플러스 조건)`;
+    } else if (channel === 'et') {
+      // 전자랜드: 향후 추가 조건 설정 가능  
+      // query += ` AND (전자랜드 조건)`;
+    }
+    
+    query += ` ORDER BY 카드, 사용금액`;
+    
+    const rows = await conn.query(query);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });

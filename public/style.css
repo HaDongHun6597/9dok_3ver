@@ -290,12 +290,11 @@ body {
 }
 
 .products-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 25px;
     margin-bottom: 30px;
     width: 100%;
-    justify-content: flex-start;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -305,9 +304,6 @@ body {
 }
 
 .product-card {
-    flex: 1 1 calc(50% - 12.5px);
-    min-width: 280px;
-    max-width: none;
     background: white;
     border-radius: 12px;
     padding: 20px;
@@ -543,9 +539,6 @@ body {
     min-height: 200px;
     cursor: pointer;
     transition: all 0.3s;
-    flex: 0 0 320px !important;
-    max-width: 320px !important;
-    width: 320px;
 }
 
 .add-product-card:hover {
