@@ -238,7 +238,7 @@ body {
 }
 
 .benefits-grid .benefit-item:hover {
-    background: #e3f2fd;
+    background: #ffe0e6;
     border-color: #2196F3;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
@@ -375,8 +375,8 @@ body {
 }
 
 .benefit-item.total {
-    border-color: #2196f3;
-    background: #f0f7ff;
+    border-color: #A50034;
+    background: #fff5f7;
 }
 
 .benefit-title {
@@ -418,16 +418,16 @@ body {
 }
 
 .prepayment-section {
-    border-color: #2196f3;
-    background: #f0f7ff;
+    border-color: #A50034;
+    background: #fff5f7;
 }
 
 .prepayment-section .benefit-title {
-    color: #1976d2;
+    color: #8A002A;
 }
 
 .prepayment-price {
-    color: #2196f3 !important;
+    color: #A50034 !important;
 }
 
 .prepayment-detail-item {
@@ -651,7 +651,7 @@ body {
 }
 
 .discount .price-value {
-    color: #2196f3;
+    color: #A50034;
 }
 
 .final-price {
@@ -673,17 +673,17 @@ body {
 
 /* 기간별 가격 표시 스타일 */
 .promotion-period .price-label {
-    color: #2196f3;
+    color: #A50034;
     font-weight: 600;
     font-size: 11px;
 }
 
 .promotion-final {
-    background: linear-gradient(135deg, #e3f2fd, #f3f9ff);
+    background: linear-gradient(135deg, #ffe0e6, #f3f9ff);
     padding: 8px 10px;
     border-radius: 6px;
     margin: 2px 0 6px 0;
-    border-left: 3px solid #2196f3;
+    border-left: 3px solid #A50034;
 }
 
 .promotion-final .price-label {
@@ -880,8 +880,8 @@ body {
 }
 
 .product-card.selected {
-    border-color: #2196f3;
-    background: #e3f2fd;
+    border-color: #A50034;
+    background: #ffe0e6;
 }
 
 .product-name {
@@ -925,7 +925,7 @@ body {
     position: absolute;
     top: 10px;
     right: 10px;
-    background: #2196f3;
+    background: #A50034;
     color: white;
     padding: 4px 8px;
     border-radius: 12px;
@@ -1063,13 +1063,13 @@ body {
 }
 
 .modal-scroll-content::-webkit-scrollbar-thumb {
-    background: #2196f3;
+    background: #A50034;
     border-radius: 10px;
     border: 1px solid #f0f0f0;
 }
 
 .modal-scroll-content::-webkit-scrollbar-thumb:hover {
-    background: #1976d2;
+    background: #8A002A;
 }
 
 .modal-header {
@@ -1131,7 +1131,7 @@ body {
 }
 
 .step.active:not(:last-child)::after {
-    background: #2196f3;
+    background: #A50034;
 }
 
 .step-number {
@@ -1150,7 +1150,7 @@ body {
 }
 
 .step.active .step-number {
-    background: #2196f3;
+    background: #A50034;
     color: white;
 }
 
@@ -1167,7 +1167,7 @@ body {
 }
 
 .step.active .step-label {
-    color: #2196f3;
+    color: #A50034;
 }
 
 /* 단계 컨텐츠 */
@@ -1215,7 +1215,7 @@ body {
 
 .search-section input:focus {
     outline: none;
-    border-color: #2196f3;
+    border-color: #A50034;
     box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
 }
 
@@ -1248,15 +1248,15 @@ body {
 }
 
 .option-card:hover {
-    border-color: #2196f3;
+    border-color: #A50034;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.1);
 }
 
 .option-card.selected {
-    border-color: #2196f3;
-    background: #e3f2fd;
-    color: #1976d2;
+    border-color: #A50034;
+    background: #ffe0e6;
+    color: #8A002A;
     font-weight: bold;
 }
 
@@ -1302,7 +1302,7 @@ body {
 }
 
 .selection-item {
-    background: #2196f3;
+    background: #A50034;
     color: white;
     padding: 6px 12px;
     border-radius: 16px;
@@ -1336,12 +1336,12 @@ body {
 }
 
 .btn-primary {
-    background: #2196f3;
+    background: #A50034;
     color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: #1976d2;
+    background: #8A002A;
 }
 
 .btn-secondary {
@@ -1375,7 +1375,7 @@ body {
 }
 
 .partner-card-btn {
-    background: #2196f3;
+    background: #A50034;
     color: white;
     border: none;
     padding: 6px 12px;
@@ -1386,7 +1386,7 @@ body {
 }
 
 .partner-card-btn:hover {
-    background: #1976d2;
+    background: #8A002A;
 }
 
 .care-service-btn {
@@ -1438,14 +1438,14 @@ body {
 }
 
 .clickable-card:hover {
-    border-color: #2196f3 !important;
+    border-color: #A50034 !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
 }
 
 .partner-card-info {
-    background: #f0f7ff;
-    color: #1976d2;
+    background: #fff5f7;
+    color: #8A002A;
     padding: 10px 12px;
     margin: 8px 0;
     border-radius: 6px;
@@ -1474,7 +1474,7 @@ body {
 .partner-card-btn.small {
     padding: 3px 8px;
     font-size: 10px;
-    background: #2196f3;
+    background: #A50034;
     color: white;
     border: none;
     border-radius: 3px;
@@ -1483,7 +1483,7 @@ body {
 }
 
 .partner-card-btn.small:hover {
-    background: #1976d2;
+    background: #8A002A;
 }
 
 .partner-card-grid {
@@ -1503,15 +1503,15 @@ body {
 }
 
 .partner-card-option:hover {
-    border-color: #2196f3;
+    border-color: #A50034;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.1);
 }
 
 .partner-card-option.selected {
-    border-color: #2196f3;
-    background: #e3f2fd;
-    color: #1976d2;
+    border-color: #A50034;
+    background: #ffe0e6;
+    color: #8A002A;
 }
 
 .card-name {
@@ -1531,14 +1531,14 @@ body {
 }
 
 .partner-card-option.recommended {
-    border-color: #2196f3;
-    background: linear-gradient(135deg, #f0f7ff, #e3f2fd);
+    border-color: #A50034;
+    background: linear-gradient(135deg, #fff5f7, #ffe0e6);
     position: relative;
 }
 
 .partner-card-option.recommended:hover {
-    border-color: #1976d2;
-    background: linear-gradient(135deg, #e3f2fd, #d1e9ff);
+    border-color: #8A002A;
+    background: linear-gradient(135deg, #ffe0e6, #ffccd5);
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(33, 150, 243, 0.15);
 }
@@ -1549,7 +1549,7 @@ body {
 }
 
 .recommended-badge {
-    background: #2196f3;
+    background: #A50034;
     color: white;
     font-size: 10px;
     font-weight: 600;

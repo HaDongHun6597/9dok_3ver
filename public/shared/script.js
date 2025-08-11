@@ -904,7 +904,7 @@ class SubscriptionCalculator {
         
         alertModal.innerHTML = `
             <div class="modal-content custom-alert-content" style="max-width: 450px; margin: 10% auto;">
-                <div class="modal-header" style="background: linear-gradient(135deg, #4caf50, #388e3c);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #A50034, #8A002A);">
                     <h2 style="margin: 0; color: white;">${title}</h2>
                 </div>
                 <div class="modal-body" style="padding: 20px; white-space: pre-line; font-size: 14px; line-height: 1.6;">

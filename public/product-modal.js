@@ -285,7 +285,7 @@ class ProductSelectionModal {
                         position: absolute;
                         top: 5px;
                         right: 5px;
-                        background: #2196f3;
+                        background: #A50034;
                         color: white;
                         padding: 2px 6px;
                         border-radius: 4px;

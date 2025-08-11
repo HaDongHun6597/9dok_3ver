@@ -84,7 +84,7 @@ body {
 
 /* 헤더 */
 .header {
-    background: linear-gradient(135deg, #e91e63, #ad1457);
+    background: linear-gradient(135deg, #A50034, #8A002A);
     color: white;
     padding: 20px 0 10px 0;
     position: relative;
@@ -160,7 +160,7 @@ body {
 .search-bar button {
     padding: 10px 20px;
     background: #fff;
-    color: #e91e63;
+    color: #A50034;
     border: none;
     border-radius: 25px;
     font-weight: 600;
@@ -191,7 +191,7 @@ body {
 }
 
 .calculator-header {
-    background: linear-gradient(135deg, #4a7c4e, #6ab26f);
+    background: linear-gradient(135deg, #A50034, #D6003F);
     color: white;
     padding: 20px;
     text-align: center;
@@ -217,12 +217,12 @@ body {
 }
 
 .benefit-item.active {
-    border-color: #4a7c4e;
-    background: #f8fff9;
+    border-color: #A50034;
+    background: #fff5f7;
 }
 
 .benefit-item.total {
-    border-color: #e91e63;
+    border-color: #A50034;
     background: #fef7f8;
 }
 
@@ -284,7 +284,7 @@ body {
 .benefit-price {
     font-size: 18px;
     font-weight: 700;
-    color: #e91e63;
+    color: #A50034;
     margin-bottom: 10px;
 }
 
@@ -306,7 +306,7 @@ body {
 }
 
 .final-total {
-    background: linear-gradient(135deg, #e91e63, #ad1457);
+    background: linear-gradient(135deg, #A50034, #8A002A);
     color: white;
     padding: 20px;
     text-align: center;
@@ -347,9 +347,9 @@ body {
 }
 
 .product-card:hover {
-    border-color: #e91e63;
+    border-color: #A50034;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.1);
+    box-shadow: 0 4px 12px rgba(165, 0, 52, 0.1);
 }
 
 .product-image {
@@ -437,7 +437,7 @@ body {
 }
 
 .discount .price-value {
-    color: #4caf50;
+    color: #666;
 }
 
 .final-price {
@@ -453,33 +453,33 @@ body {
 
 .final-price .price-value {
     font-size: 16px;
-    color: #e91e63;
+    color: #A50034;
     font-weight: 700;
 }
 
 /* 기간별 가격 표시 스타일 */
 .promotion-period .price-label {
-    color: #2196f3;
+    color: #A50034;
     font-weight: 600;
     font-size: 11px;
 }
 
 .promotion-final {
-    background: linear-gradient(135deg, #e3f2fd, #f3f9ff);
+    background: linear-gradient(135deg, #ffe0e6, #fff5f7);
     padding: 8px 10px;
     border-radius: 6px;
     margin: 2px 0 6px 0;
-    border-left: 3px solid #2196f3;
+    border-left: 3px solid #A50034;
 }
 
 .promotion-final .price-label {
-    color: #1565c0;
+    color: #8A002A;
     font-weight: 600;
     font-size: 12px;
 }
 
 .promotion-final .price-value {
-    color: #1565c0;
+    color: #A50034;
     font-size: 15px;
     font-weight: 700;
 }
@@ -505,7 +505,7 @@ body {
 }
 
 .basic-final .price-value {
-    color: #ef6c00;
+    color: #A50034;
     font-size: 15px;
     font-weight: 700;
 }
@@ -513,7 +513,7 @@ body {
 .product-monthly {
     font-size: 18px;
     font-weight: 700;
-    color: #e91e63;
+    color: #A50034;
 }
 
 .product-remove {
@@ -574,7 +574,7 @@ body {
 }
 
 .add-product-card:hover {
-    border-color: #e91e63;
+    border-color: #A50034;
     background: #fce4ec;
 }
 
@@ -585,7 +585,7 @@ body {
 
 .add-icon {
     font-size: 48px;
-    color: #e91e63;
+    color: #A50034;
     margin-bottom: 10px;
 }
 
@@ -647,13 +647,13 @@ body {
 }
 
 .product-card:hover {
-    border-color: #e91e63;
+    border-color: #A50034;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.1);
+    box-shadow: 0 4px 12px rgba(165, 0, 52, 0.1);
 }
 
 .product-card.selected {
-    border-color: #e91e63;
+    border-color: #A50034;
     background: #fce4ec;
 }
 
@@ -685,7 +685,7 @@ body {
 .monthly-fee {
     font-size: 18px;
     font-weight: bold;
-    color: #e91e63;
+    color: #A50034;
 }
 
 .original-price {
@@ -698,7 +698,7 @@ body {
     position: absolute;
     top: 10px;
     right: 10px;
-    background: #e91e63;
+    background: #A50034;
     color: white;
     padding: 4px 8px;
     border-radius: 12px;
@@ -724,7 +724,7 @@ body {
 
 .welcome-section h2 {
     font-size: 32px;
-    color: #e91e63;
+    color: #A50034;
     margin-bottom: 15px;
 }
 
@@ -752,7 +752,7 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #e91e63, #ad1457);
+    background: linear-gradient(135deg, #A50034, #8A002A);
     color: white;
     display: flex;
     align-items: center;
@@ -768,7 +768,7 @@ body {
 }
 
 .start-btn {
-    background: linear-gradient(135deg, #e91e63, #ad1457);
+    background: linear-gradient(135deg, #A50034, #8A002A);
     color: white;
     border: none;
     padding: 15px 30px;
@@ -781,7 +781,7 @@ body {
 
 .start-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(233, 30, 99, 0.3);
+    box-shadow: 0 6px 20px rgba(165, 0, 52, 0.3);
 }
 
 /* 모달 스타일 */
@@ -816,7 +816,7 @@ body {
     flex: 1;
     /* 커스텀 스크롤바 스타일 */
     scrollbar-width: thin;
-    scrollbar-color: #e91e63 #f0f0f0;
+    scrollbar-color: #A50034 #f0f0f0;
     /* 우측 패딩으로 스크롤바 공간 확보하고 둥근 모서리 유지 */
     padding-right: 4px;
     margin-right: -4px;
@@ -833,13 +833,13 @@ body {
 }
 
 .modal-scroll-content::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #e91e63, #ad1457);
+    background: linear-gradient(135deg, #A50034, #8A002A);
     border-radius: 10px;
     border: 1px solid #f0f0f0;
 }
 
 .modal-scroll-content::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #ad1457, #880e4f);
+    background: linear-gradient(135deg, #8A002A, #6B0021);
 }
 
 .modal-header {
@@ -848,7 +848,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #e91e63, #ad1457);
+    background: linear-gradient(135deg, #A50034, #8A002A);
     color: white;
     border-radius: 12px 12px 0 0;
 }
@@ -900,7 +900,7 @@ body {
 }
 
 .step.active:not(:last-child)::after {
-    background: #e91e63;
+    background: #A50034;
 }
 
 .step-number {
@@ -919,12 +919,12 @@ body {
 }
 
 .step.active .step-number {
-    background: #e91e63;
+    background: #A50034;
     color: white;
 }
 
 .step.completed .step-number {
-    background: #4caf50;
+    background: #A50034;
     color: white;
 }
 
@@ -936,7 +936,7 @@ body {
 }
 
 .step.active .step-label {
-    color: #e91e63;
+    color: #A50034;
 }
 
 /* 단계 컨텐츠 */
@@ -983,8 +983,8 @@ body {
 
 .search-section input:focus {
     outline: none;
-    border-color: #e91e63;
-    box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.1);
+    border-color: #A50034;
+    box-shadow: 0 0 0 2px rgba(165, 0, 52, 0.1);
 }
 
 .search-result-count {
@@ -1016,15 +1016,15 @@ body {
 }
 
 .option-card:hover {
-    border-color: #e91e63;
+    border-color: #A50034;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.1);
+    box-shadow: 0 4px 12px rgba(165, 0, 52, 0.1);
 }
 
 .option-card.selected {
-    border-color: #e91e63;
+    border-color: #A50034;
     background: #fce4ec;
-    color: #e91e63;
+    color: #A50034;
     font-weight: bold;
 }
 
@@ -1068,7 +1068,7 @@ body {
 }
 
 .selection-item {
-    background: #e91e63;
+    background: #A50034;
     color: white;
     padding: 6px 12px;
     border-radius: 16px;
@@ -1101,12 +1101,12 @@ body {
 }
 
 .btn-primary {
-    background: #e91e63;
+    background: #A50034;
     color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: #ad1457;
+    background: #8A002A;
 }
 
 .btn-secondary {
@@ -1120,12 +1120,12 @@ body {
 }
 
 .btn-success {
-    background: #4caf50;
+    background: #A50034;
     color: white;
 }
 
 .btn-success:hover:not(:disabled) {
-    background: #388e3c;
+    background: #8A002A;
 }
 
 /* 제휴카드 관련 스타일 */
@@ -1140,7 +1140,7 @@ body {
 }
 
 .partner-card-btn {
-    background: #4caf50;
+    background: #A50034;
     color: white;
     border: none;
     padding: 6px 12px;
@@ -1151,7 +1151,7 @@ body {
 }
 
 .partner-card-btn:hover {
-    background: #388e3c;
+    background: #8A002A;
 }
 
 .clickable-card {
@@ -1159,14 +1159,14 @@ body {
 }
 
 .clickable-card:hover {
-    border-color: #2196f3 !important;
+    border-color: #A50034 !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
+    box-shadow: 0 4px 12px rgba(165, 0, 52, 0.15);
 }
 
 .partner-card-info {
-    background: #e8f5e8;
-    color: #2e7d32;
+    background: #ffe0e6;
+    color: #8A002A;
     padding: 10px 12px;
     margin: 8px 0;
     border-radius: 6px;
@@ -1195,7 +1195,7 @@ body {
 .partner-card-btn.small {
     padding: 3px 8px;
     font-size: 10px;
-    background: #4caf50;
+    background: #A50034;
     color: white;
     border: none;
     border-radius: 3px;
@@ -1204,7 +1204,7 @@ body {
 }
 
 .partner-card-btn.small:hover {
-    background: #388e3c;
+    background: #8A002A;
 }
 
 .partner-card-grid {
@@ -1224,15 +1224,15 @@ body {
 }
 
 .partner-card-option:hover {
-    border-color: #e91e63;
+    border-color: #A50034;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.1);
+    box-shadow: 0 4px 12px rgba(165, 0, 52, 0.1);
 }
 
 .partner-card-option.selected {
-    border-color: #e91e63;
+    border-color: #A50034;
     background: #fce4ec;
-    color: #e91e63;
+    color: #A50034;
 }
 
 .card-name {
@@ -1247,7 +1247,7 @@ body {
 }
 
 .partner-card-option.selected .card-discount {
-    color: #ad1457;
+    color: #8A002A;
     font-weight: 600;
 }
 
@@ -1375,7 +1375,7 @@ body {
 /* 전체 페이지 스크롤바 커스터마이징 */
 * {
     scrollbar-width: thin;
-    scrollbar-color: #e91e63 #f0f0f0;
+    scrollbar-color: #A50034 #f0f0f0;
 }
 
 *::-webkit-scrollbar {
@@ -1389,13 +1389,13 @@ body {
 }
 
 *::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #e91e63, #ad1457);
+    background: linear-gradient(135deg, #A50034, #8A002A);
     border-radius: 10px;
     border: 1px solid #f0f0f0;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #ad1457, #880e4f);
+    background: linear-gradient(135deg, #8A002A, #6B0021);
 }
 
 *::-webkit-scrollbar-corner {

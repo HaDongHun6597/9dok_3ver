@@ -330,26 +330,26 @@ class SubscriptionCalculator {
                     ${totalCardBenefit > 0 ? `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                         <span style="font-size: 12px; color: #666;">총 카드혜택:</span>
-                        <span style="font-size: 12px; font-weight: bold; color: #ff4444;">-${this.formatPrice(totalCardBenefit)}</span>
+                        <span style="font-size: 12px; font-weight: bold; color: #666;">-${this.formatPrice(totalCardBenefit)}</span>
                     </div>` : ''}
                     ${totalActivationBenefit > 0 ? `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                         <span style="font-size: 12px; color: #666;">프로모션할인:</span>
-                        <span style="font-size: 12px; font-weight: bold; color: #ff4444;">-${this.formatPrice(totalActivationBenefit)}</span>
+                        <span style="font-size: 12px; font-weight: bold; color: #666;">-${this.formatPrice(totalActivationBenefit)}</span>
                     </div>` : ''}
                     ${totalCombinationBenefit > 0 ? `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                         <span style="font-size: 12px; color: #666;">결합할인:</span>
-                        <span style="font-size: 12px; font-weight: bold; color: #ff4444;">-${this.formatPrice(totalCombinationBenefit)}</span>
+                        <span style="font-size: 12px; font-weight: bold; color: #666;">-${this.formatPrice(totalCombinationBenefit)}</span>
                     </div>` : ''}
                     <div style="border-top: 1px solid #ddd; margin-top: 8px; padding-top: 8px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
                             <span style="font-size: 12px; color: #666;">총 혜택금액:</span>
-                            <span style="font-size: 12px; font-weight: bold; color: #ff4444;">-${this.formatPrice(totalBenefit)}</span>
+                            <span style="font-size: 12px; font-weight: bold; color: #666;">-${this.formatPrice(totalBenefit)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span style="font-size: 13px; font-weight: bold; color: #333;">실 지불총액:</span>
-                            <span style="font-size: 14px; font-weight: bold; color: #2196f3;">${this.formatPrice(actualTotalCost)}</span>
+                            <span style="font-size: 14px; font-weight: bold; color: #A50034;">${this.formatPrice(actualTotalCost)}</span>
                         </div>
                     </div>
                 </div>
@@ -1141,7 +1141,7 @@ class SubscriptionCalculator {
         
         alertModal.innerHTML = `
             <div class="modal-content custom-alert-content" style="max-width: 450px; margin: 10% auto;">
-                <div class="modal-header" style="background: linear-gradient(135deg, #4caf50, #388e3c);">
+                <div class="modal-header" style="background: linear-gradient(135deg, #A50034, #8A002A);">
                     <h2 style="margin: 0; color: white;">${title}</h2>
                 </div>
                 <div class="modal-body" style="padding: 20px; white-space: pre-line; font-size: 14px; line-height: 1.6;">
