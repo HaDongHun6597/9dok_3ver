@@ -1460,7 +1460,7 @@ body {
 .watermark {
     position: absolute;
     font-size: 18px;
-    color: rgba(128, 128, 128, 0.12); /* 회색으로 변경 */
+    color: rgba(128, 128, 128, 0.07); /* 더 희미하게 (12% → 7%) */
     font-weight: 700;
     text-align: center;
     pointer-events: none;
@@ -1468,7 +1468,7 @@ body {
     user-select: none;
     font-family: 'Pretendard', sans-serif;
     line-height: 1.5;
-    text-shadow: 0 0 10px rgba(128, 128, 128, 0.05);
+    text-shadow: 0 0 8px rgba(128, 128, 128, 0.03);
     letter-spacing: 2px;
     transform-origin: center center;
 }
@@ -1481,6 +1481,6 @@ body {
 
 .watermark .ip-info {
     font-size: 18px; /* 더 크게 */
-    opacity: 0.85;
+    opacity: 0.7; /* 더 희미하게 (85% → 70%) */
     font-weight: 600;
 }
