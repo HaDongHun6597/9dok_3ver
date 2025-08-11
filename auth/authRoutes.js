@@ -1,24 +1,22 @@
 const express = require('express');
 const axios = require('axios');
-const https = require('https');
+const jwt = require('jsonwebtoken');
 const { AuthClient } = require('./authMiddleware');
 
 const router = express.Router();
 const authClient = new AuthClient();
 
-// HTTPS 에이전트 설정 (SSL 인증서 검증 우회)
-const httpsAgent = new https.Agent({
-  rejectUnauthorized: false // 개발환경에서만 사용
-});
-
 // Axios 인스턴스 생성
 const apiClient = axios.create({
-  httpsAgent: httpsAgent,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'User-Agent': 'LGEmart-Client/1.0'
+    'User-Agent': '9dok_3-Client/1.0'
+  },
+  // HTTPS 연결을 위한 설정
+  validateStatus: function (status) {
+    return status < 500; // 500 미만의 상태 코드는 성공으로 처리
   }
 });
 
@@ -31,25 +29,65 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: '사번과 비밀번호가 필요합니다.' });
     }
 
-    // Mock 계정 (특정 비밀번호가 일치할 때만)
-    if ((employee_id === '1017701' || employee_id === 'test') && password === 'mock123') {
-      const mockResponse = {
-        message: '로그인 성공',
-        access_token: 'mock-access-token-' + Date.now(),
-        refresh_token: 'mock-refresh-token-' + Date.now(),
-        user: {
-          id: 1,
-          employee_id: employee_id,
-          username: employee_id === '1017701' ? '하동훈' : '테스트 사용자',
-          company: 'KTcs',
-          team: 'IT팀',
-          branch: '서울본점',
-          position: 'Staff',
-          is_admin: true,
-          is_active: true
-        }
+    // 개발/테스트용 Mock 계정 처리
+    if (process.env.NODE_ENV === 'development' && employee_id === 'test' && password === 'test123') {
+      // Mock JWT 토큰 생성 (실제 형식과 동일하게)
+      const mockUser = {
+        sub: '999',  // 사용자 ID
+        employee_id: 'test',
+        username: '테스트 사용자',
+        email: 'test@ktcs.com',
+        company: 'KTCS',
+        team: 'IT팀',
+        branch: '테스트',
+        position: '개발자',
+        distribution: '유통',
+        isAdmin: true,
+        is_active: true,
+        apps: [],
+        permissions: {}
       };
-      return res.json(mockResponse);
+      
+      const accessToken = jwt.sign(
+        mockUser,
+        process.env.JWT_SECRET || 'synology_auth_jwt_secret_key_2024_very_secure',
+        {
+          expiresIn: '1h',
+          issuer: process.env.JWT_ISSUER || 'synology-auth',
+          audience: process.env.JWT_AUDIENCE || 'synology-apps'
+        }
+      );
+      
+      const refreshToken = jwt.sign(
+        { sub: mockUser.sub, employee_id: mockUser.employee_id },
+        process.env.JWT_REFRESH_SECRET || 'synology_auth_refresh_secret_key_2024_very_secure',
+        {
+          expiresIn: '7d',
+          issuer: process.env.JWT_ISSUER || 'synology-auth',
+          audience: process.env.JWT_AUDIENCE || 'synology-apps'
+        }
+      );
+      
+      return res.json({
+        message: '로그인 성공',
+        tokens: {
+          access_token: accessToken,
+          refresh_token: refreshToken
+        },
+        user: {
+          id: 999,
+          employee_id: 'test',
+          username: '테스트 사용자',
+          email: 'test@ktcs.com',
+          company: 'KTCS',
+          team: 'IT팀',
+          branch: '테스트',
+          position: '개발자',
+          is_admin: true,
+          is_active: true,
+          must_change_password: false
+        }
+      });
     }
 
     // 실제 인증 서버에 로그인 요청
@@ -63,9 +101,21 @@ router.post('/login', async (req, res) => {
       });
 
       console.log(`Auth server response status: ${response.status}`);
-      console.log('Auth server response:', response.data);
       
-      res.json(response.data);
+      // 인증 서버 응답 형식 확인 및 표준화
+      const authData = response.data;
+      
+      // tokens 객체가 없으면 access_token, refresh_token을 tokens로 묶기
+      if (!authData.tokens && authData.access_token) {
+        authData.tokens = {
+          access_token: authData.access_token,
+          refresh_token: authData.refresh_token
+        };
+        delete authData.access_token;
+        delete authData.refresh_token;
+      }
+      
+      res.json(authData);
     } catch (axiosError) {
       console.error('Auth server connection error:', axiosError.message);
       
@@ -99,21 +149,79 @@ router.post('/refresh', async (req, res) => {
       return res.status(400).json({ error: '리프레시 토큰이 필요합니다.' });
     }
 
-    // Mock 리프레시 토큰 처리
-    if (refresh_token.startsWith('mock-refresh-token-')) {
-      const mockResponse = {
-        access_token: 'mock-access-token-' + Date.now(),
-        refresh_token: 'mock-refresh-token-' + Date.now(),
+    // 리프레시 토큰 검증
+    const refreshResult = authClient.verifyRefreshToken(refresh_token);
+    
+    // 개발 환경 Mock 토큰 처리
+    if (process.env.NODE_ENV === 'development' && refreshResult.success && refreshResult.payload.employee_id === 'test') {
+      const mockUser = {
+        sub: refreshResult.payload.sub,
+        employee_id: 'test',
+        username: '테스트 사용자',
+        email: 'test@ktcs.com',
+        company: 'KTCS',
+        team: 'IT팀',
+        branch: '테스트',
+        position: '개발자',
+        distribution: '유통',
+        isAdmin: true,
+        is_active: true,
+        apps: [],
+        permissions: {}
       };
-      return res.json(mockResponse);
+      
+      const newAccessToken = jwt.sign(
+        mockUser,
+        process.env.JWT_SECRET || 'synology_auth_jwt_secret_key_2024_very_secure',
+        {
+          expiresIn: '1h',
+          issuer: process.env.JWT_ISSUER || 'synology-auth',
+          audience: process.env.JWT_AUDIENCE || 'synology-apps'
+        }
+      );
+      
+      const newRefreshToken = jwt.sign(
+        { sub: mockUser.sub, employee_id: mockUser.employee_id },
+        process.env.JWT_REFRESH_SECRET || 'synology_auth_refresh_secret_key_2024_very_secure',
+        {
+          expiresIn: '7d',
+          issuer: process.env.JWT_ISSUER || 'synology-auth',
+          audience: process.env.JWT_AUDIENCE || 'synology-apps'
+        }
+      );
+      
+      return res.json({
+        tokens: {
+          access_token: newAccessToken,
+          refresh_token: newRefreshToken
+        }
+      });
     }
 
-    // 실제 토큰의 경우만 authClient 사용
+    // 실제 인증 서버에 토큰 갱신 요청
     try {
-      const tokens = await authClient.refreshAccessToken(refresh_token);
-      res.json({ tokens });
+      const response = await apiClient.post(`${authClient.authServerUrl}/auth/refresh`, {
+        refresh_token
+      });
+      
+      const data = response.data;
+      
+      // 응답 형식 표준화
+      if (!data.tokens && data.access_token) {
+        data.tokens = {
+          access_token: data.access_token,
+          refresh_token: data.refresh_token
+        };
+        delete data.access_token;
+        delete data.refresh_token;
+      }
+      
+      res.json(data);
     } catch (error) {
-      console.error('Real token refresh error:', error);
+      console.error('Token refresh error:', error.message);
+      if (error.response) {
+        return res.status(error.response.status).json(error.response.data);
+      }
       res.status(401).json({ error: '토큰 갱신에 실패했습니다.' });
     }
   } catch (error) {
@@ -155,32 +263,52 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ error: '토큰이 필요합니다.' });
     }
 
-    // 먼저 mock 토큰인지 확인
+    // 토큰 검증
     const result = authClient.verifyToken(token);
-    if (result.success) {
-      return res.json({ user: result.user });
+    
+    // 개발 환경 Mock 토큰 처리
+    if (process.env.NODE_ENV === 'development' && result.success && result.user.employee_id === 'test') {
+      return res.json({ 
+        user: {
+          id: result.user.id,
+          employee_id: result.user.employee_id,
+          username: result.user.username,
+          email: result.user.email,
+          company: result.user.company,
+          team: result.user.team,
+          branch: result.user.branch,
+          position: result.user.position,
+          distribution: result.user.distribution,
+          is_admin: result.user.is_admin,
+          is_active: result.user.is_active,
+          last_login: new Date().toISOString()
+        }
+      });
     }
-
-    // mock 토큰이 아니면 인증 서버에 직접 사용자 정보 요청
+    
+    if (!result.success) {
+      // 토큰이 유효하지 않으면 인증 서버에 직접 요청
+    } else {
+      // 토큰이 유효하면 서버에서 최신 사용자 정보 가져오기 (선택사항)
+    }
+    
+    // 인증 서버에 사용자 정보 요청
     try {
-      const response = await fetch(`${authClient.authServerUrl}/user/profile`, {
+      const response = await apiClient.get(`${authClient.authServerUrl}/user/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      if (response.status === 401) {
-        return res.status(401).json({ error: '토큰이 만료되었습니다.' });
-      }
-
-      if (!response.ok) {
-        return res.status(response.status).json({ error: '사용자 정보 조회 실패' });
-      }
-
-      const data = await response.json();
-      res.json(data);
+      res.json(response.data);
     } catch (fetchError) {
-      console.error('Auth server fetch error:', fetchError);
+      console.error('Auth server fetch error:', fetchError.message);
+      if (fetchError.response) {
+        if (fetchError.response.status === 401) {
+          return res.status(401).json({ error: '토큰이 만료되었습니다.' });
+        }
+        return res.status(fetchError.response.status).json(fetchError.response.data);
+      }
       return res.status(500).json({ error: '인증 서버 연결 실패' });
     }
   } catch (error) {

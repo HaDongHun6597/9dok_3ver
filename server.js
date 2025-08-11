@@ -7,6 +7,9 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const unzipper = require('unzipper');
 
+// 환경 변수 로드
+require('dotenv').config();
+
 // 인증 관련 모듈 추가
 const authRoutes = require('./auth/authRoutes');
 const { AuthClient, authenticateToken, requireAdmin, requireActiveUser } = require('./auth/authMiddleware');
@@ -15,7 +18,11 @@ const app = express();
 const PORT = process.env.PORT || 3008;
 
 // AuthClient 인스턴스 생성
-const authClient = new AuthClient();
+const authClient = new AuthClient(
+  process.env.AUTH_SERVER_URL,
+  process.env.JWT_SECRET,
+  process.env.JWT_REFRESH_SECRET
+);
 
 // 미들웨어
 app.use(cors());
@@ -71,11 +78,11 @@ const channelConfigs = {
 
 // MariaDB 연결
 const pool = mariadb.createPool({
-  host: 'idvvbi.com',
-  port: 3307,
-  user: 'app_user',
-  password: 'AppUser2024!@#',
-  database: 'subscription_db',
+  host: process.env.DB_HOST || 'idvvbi.com',
+  port: process.env.DB_PORT || 3307,
+  user: process.env.DB_USER || 'app_user',
+  password: process.env.DB_PASSWORD || 'AppUser2024!@#',
+  database: process.env.DB_NAME || 'subscription_db',
   connectionLimit: 10
 });
 
@@ -428,12 +435,53 @@ app.get('/api/image/:model_name', async (req, res) => {
 // 사용자 정보 조회 API
 app.get('/api/user-info', async (req, res) => {
   try {
-    // IP 주소 가져오기
-    const clientIp = req.headers['x-forwarded-for'] || 
-                     req.headers['x-real-ip'] || 
-                     req.connection.remoteAddress ||
-                     req.socket.remoteAddress ||
-                     req.ip || '127.0.0.1';
+    // IP 주소 가져오기 (우선순위: x-real-ip > x-forwarded-for > 연결 주소)
+    let clientIp = req.headers['x-real-ip'] || 
+                   req.headers['x-forwarded-for'] || 
+                   req.connection.remoteAddress ||
+                   req.socket.remoteAddress ||
+                   req.ip || '127.0.0.1';
+    
+    // IPv6 형식 처리 및 실제 IP 추출
+    if (clientIp.includes(',')) {
+      // x-forwarded-for에 여러 IP가 있는 경우 첫 번째 것 사용
+      clientIp = clientIp.split(',')[0].trim();
+    }
+    
+    // ::ffff: 프리픽스 제거 (IPv4-mapped IPv6 주소)
+    clientIp = clientIp.replace('::ffff:', '');
+    
+    // ::1은 IPv6 localhost이므로 127.0.0.1로 변환
+    if (clientIp === '::1') {
+      clientIp = '127.0.0.1';
+    }
+    
+    // 실제 공인 IP 가져오기 (로컬 환경이 아닌 경우)
+    let realPublicIp = clientIp;
+    
+    // 로컬 IP인지 확인
+    const isLocalIp = clientIp === '127.0.0.1' || 
+                      clientIp === 'localhost' || 
+                      clientIp.startsWith('192.168.') || 
+                      clientIp.startsWith('10.') || 
+                      clientIp.startsWith('172.');
+    
+    console.log('클라이언트 IP:', clientIp, '로컬 IP 여부:', isLocalIp);
+    
+    // 로컬 환경에서는 외부 서비스를 통해 실제 공인 IP 가져오기
+    if (isLocalIp) {
+      try {
+        const axios = require('axios');
+        const ipResponse = await axios.get('https://api.ipify.org?format=json', { timeout: 3000 });
+        if (ipResponse.data && ipResponse.data.ip) {
+          realPublicIp = ipResponse.data.ip;
+          console.log('공인 IP (ipify):', realPublicIp);
+        }
+      } catch (ipError) {
+        console.log('공인 IP 조회 실패:', ipError.message);
+        // 실패 시 클라이언트 IP 그대로 사용
+      }
+    }
     
     // 기본 사용자 정보
     let userInfo = {
@@ -441,8 +489,13 @@ app.get('/api/user-info', async (req, res) => {
       position: '',
       branch: '',
       company: 'KTCS',
-      ip: clientIp.replace('::ffff:', ''),
-      realIp: (req.headers['x-real-ip'] || clientIp).replace('::ffff:', '')
+      team: '',
+      employee_id: '',
+      distribution: '',
+      is_admin: false,
+      email: '',
+      phone: '',
+      realIp: realPublicIp  // 실제 공인 IP 사용
     };
     
     // 토큰이 있으면 파싱 시도
@@ -454,57 +507,77 @@ app.get('/api/user-info', async (req, res) => {
       console.log('토큰 추출됨:', token ? token.substring(0, 20) + '...' : '없음');
       
       try {
-        // 먼저 인증 서버에서 실제 사용자 정보를 가져오기 시도
+        // 먼저 인증 서버에서 최신 사용자 정보 가져오기 시도
+        const axios = require('axios');
         try {
-          const currentUser = await authClient.getCurrentUser(token);
-          console.log('인증 서버에서 가져온 사용자 정보:', currentUser);
+          console.log('인증 서버에 사용자 정보 요청:', `${authClient.authServerUrl}/user/profile`);
+          const response = await axios.get(`${authClient.authServerUrl}/user/profile`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            timeout: 5000
+          });
           
-          if (currentUser) {
-            userInfo.name = currentUser.username || currentUser.name || currentUser.employee_id || '사용자';
-            userInfo.position = currentUser.position || currentUser.team || '';
-            userInfo.branch = currentUser.branch || '';
-            userInfo.company = currentUser.company || 'KTCS';
+          if (response.data && response.data.user) {
+            const serverUser = response.data.user;
+            console.log('인증 서버에서 가져온 사용자 정보:', serverUser);
             
-            console.log('인증 서버 정보로 업데이트:', userInfo);
+            // 서버에서 받은 모든 정보 매핑
+            userInfo.name = serverUser.username || serverUser.name || '사용자';
+            userInfo.position = serverUser.position || '';
+            userInfo.branch = serverUser.branch || '';
+            userInfo.company = serverUser.company || 'KTCS';
+            userInfo.team = serverUser.team || '';
+            userInfo.employee_id = serverUser.employee_id || '';
+            userInfo.distribution = serverUser.distribution || '';
+            userInfo.is_admin = serverUser.is_admin || false;
+            userInfo.email = serverUser.email || '';
+            userInfo.phone = serverUser.phone || '';
+            
+            console.log('인증 서버 정보로 업데이트된 사용자 정보:', userInfo);
             res.json(userInfo);
             return;
           }
         } catch (authServerErr) {
-          console.log('인증 서버 조회 실패, 토큰 검증 시도:', authServerErr.message);
+          console.log('인증 서버 조회 실패:', authServerErr.message);
+          // 인증 서버 실패 시 로컬 토큰 검증으로 계속
         }
         
-        // 인증 서버 실패 시 로컬 토큰 검증
+        // 로컬 토큰 검증
         const result = authClient.verifyToken(token);
-        console.log('토큰 검증 결과:', result);
+        console.log('로컬 토큰 검증 결과:', result);
         
         if (result && result.success && result.user) {
           const user = result.user;
           
-          // mock 토큰이 아닌 경우에만 실제 데이터 사용
-          if (!token.startsWith('mock-access-token-')) {
-            // 실제 토큰에서 정보 추출
-            userInfo.name = user.username || user.name || user.employee_id || '사용자';
-            userInfo.position = user.position || user.team || '';
-            userInfo.branch = user.branch || '';
-            userInfo.company = user.company || 'KTCS';
-          } else {
-            // mock 토큰인 경우 기본값 유지하되 로그만 남김
-            console.log('Mock 토큰 감지, 실제 사용자 정보 사용 불가');
-            userInfo.name = '테스트 사용자';
-          }
+          // 실제 토큰에서 정보 추출 (가이드 문서와 일치하도록)
+          userInfo.name = user.username || user.name || '사용자';
+          userInfo.position = user.position || '';
+          userInfo.branch = user.branch || '';
+          userInfo.company = user.company || 'KTCS';
+          userInfo.team = user.team || '';
+          userInfo.employee_id = user.employee_id || user.id || '';
+          userInfo.distribution = user.distribution || '';
+          userInfo.is_admin = user.is_admin || user.isAdmin || false;
+          userInfo.email = user.email || '';
           
-          console.log('추출된 사용자 정보:', userInfo);
+          console.log('로컬 토큰에서 추출된 사용자 정보:', userInfo);
         } else {
           // 직접 JWT 디코드 시도 (검증 없이)
           const jwt = require('jsonwebtoken');
           const decoded = jwt.decode(token);
           console.log('JWT 디코드 결과:', decoded);
           
-          if (decoded && !token.startsWith('mock-')) {
+          if (decoded) {
             userInfo.name = decoded.username || decoded.name || decoded.employee_id || decoded.sub || '사용자';
             userInfo.position = decoded.position || decoded.team || '';
             userInfo.branch = decoded.branch || '';
             userInfo.company = decoded.company || 'KTCS';
+            userInfo.team = decoded.team || '';
+            userInfo.employee_id = decoded.employee_id || decoded.sub || '';
+            userInfo.distribution = decoded.distribution || '';
+            userInfo.is_admin = decoded.isAdmin || decoded.is_admin || false;
+            userInfo.email = decoded.email || '';
           }
         }
       } catch (tokenErr) {
@@ -514,11 +587,16 @@ app.get('/api/user-info', async (req, res) => {
         try {
           const jwt = require('jsonwebtoken');
           const decoded = jwt.decode(token);
-          if (decoded && !token.startsWith('mock-')) {
+          if (decoded) {
             userInfo.name = decoded.username || decoded.name || decoded.employee_id || decoded.sub || '사용자';
             userInfo.position = decoded.position || decoded.team || '';
             userInfo.branch = decoded.branch || '';
             userInfo.company = decoded.company || 'KTCS';
+            userInfo.team = decoded.team || '';
+            userInfo.employee_id = decoded.employee_id || decoded.sub || '';
+            userInfo.distribution = decoded.distribution || '';
+            userInfo.is_admin = decoded.isAdmin || decoded.is_admin || false;
+            userInfo.email = decoded.email || '';
           }
         } catch (decodeErr) {
           console.log('JWT 디코드 실패:', decodeErr.message);
