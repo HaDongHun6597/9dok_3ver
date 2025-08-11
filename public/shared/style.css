@@ -376,6 +376,7 @@ body {
 .product-header-content {
     display: flex;
     align-items: center;
+    justify-content: center; /* 전체 컨텐츠 중앙 정렬 */
     gap: 15px; /* 이미지와 텍스트 사이 간격 */
     margin-bottom: 15px; /* 이 섹션 아래 여백 */
 }
@@ -383,6 +384,9 @@ body {
 .product-header-content .product-image {
     flex-shrink: 0; /* 이미지가 줄어들지 않도록 방지 */
     margin: 0; /* 이전 자동 여백 제거 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .product-text-container {
@@ -1423,11 +1427,11 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 24px;
-    color: rgba(0, 0, 0, 0.08);
+    color: rgba(165, 0, 52, 0.15);
     font-weight: 700;
     text-align: center;
     pointer-events: none;
-    z-index: 9999;
+    z-index: 1;
     white-space: nowrap;
     user-select: none;
     font-family: 'Pretendard', sans-serif;
