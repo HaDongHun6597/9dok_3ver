@@ -587,7 +587,7 @@ class SubscriptionCalculator {
                 cardGroups[card.카드].push(card);
             });
             
-            container.innerHTML = '<div class="step-info">1단계: 카드사를 선택해주세요</div>';
+            container.innerHTML = ''; // 1단계 문구 제거
             
             // 추천 카드 목록
             const recommendedCards = ['신한', '롯데', '우리', '국민'];
@@ -683,8 +683,7 @@ class SubscriptionCalculator {
             });
             
             container.innerHTML = `
-                <div class="step-info">
-                    2단계: ${this.selectedCard} 카드의 사용금액을 선택해주세요
+                <div class="step-back">
                     <button class="btn-back" onclick="calculator.goBackToCardSelection()">← 카드사 선택으로 돌아가기</button>
                 </div>
             `;

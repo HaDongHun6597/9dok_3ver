@@ -1306,6 +1306,30 @@ body {
     margin-top: 10px;
 }
 
+/* 뒤로가기 버튼 전용 컨테이너 */
+.step-back {
+    padding: 10px 15px;
+    margin-bottom: 15px;
+}
+
+.step-back .btn-back {
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    color: #666;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Pretendard', sans-serif;
+}
+
+.step-back .btn-back:hover {
+    background: #fff;
+    border-color: #999;
+    color: #333;
+}
+
 .btn-back {
     background: #666;
     color: white;
