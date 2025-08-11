@@ -293,13 +293,13 @@ function applyChannelRestrictions(user) {
   
   // 채널 매핑: distribution 값과 채널 요소 ID
   const channelMap = {
-    'em': 'channel-em',     // 이마트
-    'hp': 'channel-hp',     // 홈플러스
-    'et': 'channel-et'      // 전자랜드
+    '이마트': 'channel-em',
+    '홈플러스': 'channel-hp',
+    '전자랜드': 'channel-et'
   };
   
   // 유통 정보 가져오기 (없으면 빈 문자열)
-  const distribution = user.distribution ? user.distribution.trim().toLowerCase() : '';
+  const distribution = user.distribution ? user.distribution.trim() : '';
   
   // 유통 정보가 없으면 모든 채널 접근 가능
   if (!distribution) {
@@ -318,38 +318,32 @@ function applyChannelRestrictions(user) {
   
   // 특정 유통만 접근 가능한 경우
   console.log('[applyChannelRestrictions] 특정 채널만 활성화:', distribution);
-  Object.entries(channelMap).forEach(([channelCode, elementId]) => {
+  Object.entries(channelMap).forEach(([channelName, elementId]) => {
     const channelElement = document.getElementById(elementId);
     if (channelElement) {
-      if (distribution === channelCode) {
+      if (distribution === channelName) {
         // 해당 채널만 활성화
         channelElement.style.opacity = '1';
         channelElement.style.pointerEvents = 'auto';
         channelElement.style.cursor = 'pointer';
         channelElement.title = '';
-        console.log(`[applyChannelRestrictions] ${channelCode} 채널 활성화`);
+        console.log(`[applyChannelRestrictions] ${channelName} 채널 활성화`);
       } else {
         // 다른 채널은 비활성화
         channelElement.style.opacity = '0.3';
         channelElement.style.pointerEvents = 'none';
         channelElement.style.cursor = 'not-allowed';
         channelElement.title = '접근 권한이 없습니다';
-        console.log(`[applyChannelRestrictions] ${channelCode} 채널 비활성화`);
+        console.log(`[applyChannelRestrictions] ${channelName} 채널 비활성화`);
       }
     }
   });
   
   // 유통 정보가 있는 경우 안내 메시지 업데이트
   if (distribution) {
-    const channelNames = {
-      'em': '이마트',
-      'hp': '홈플러스',
-      'et': '전자랜드'
-    };
-    const channelName = channelNames[distribution] || distribution;
     const subtitle = document.getElementById('subtitle');
     if (subtitle) {
-      subtitle.textContent = `${channelName} 채널만 이용 가능합니다`;
+      subtitle.textContent = `${distribution} 채널만 이용 가능합니다`;
     }
   }
 }
@@ -358,7 +352,7 @@ function applyChannelRestrictions(user) {
 function checkChannelAccess(user) {
   console.log('[checkChannelAccess] 채널 접근 권한 확인');
   
-  const distribution = user.distribution ? user.distribution.trim().toLowerCase() : '';
+  const distribution = user.distribution ? user.distribution.trim() : '';
   const pathname = window.location.pathname;
   
   console.log('[checkChannelAccess] 사용자 유통:', distribution || '없음 (전체 접근 가능)');
@@ -372,30 +366,22 @@ function checkChannelAccess(user) {
   
   // 현재 채널과 유통 정보 매칭
   const channelRoutes = {
-    'em': '/em',      // 이마트
-    'hp': '/hp',      // 홈플러스
-    'et': '/et'       // 전자랜드
+    '이마트': '/em',
+    '홈플러스': '/hp',
+    '전자랜드': '/et'
   };
   
   // 현재 페이지가 채널 페이지인지 확인
-  for (const [channelCode, route] of Object.entries(channelRoutes)) {
+  for (const [channelName, route] of Object.entries(channelRoutes)) {
     if (pathname.startsWith(route)) {
       // 접근 권한이 없는 경우
-      if (distribution !== channelCode) {
-        const channelNames = {
-          'em': '이마트',
-          'hp': '홈플러스',
-          'et': '전자랜드'
-        };
-        const currentChannelName = channelNames[channelCode] || channelCode;
-        const userChannelName = channelNames[distribution] || distribution;
-        
-        console.log(`[checkChannelAccess] 접근 거부: ${currentChannelName} 채널 (사용자는 ${userChannelName}만 가능)`);
-        alert(`${currentChannelName} 채널에 접근 권한이 없습니다.\n${userChannelName} 채널만 이용 가능합니다.`);
+      if (distribution !== channelName) {
+        console.log(`[checkChannelAccess] 접근 거부: ${channelName} 채널 (사용자는 ${distribution}만 가능)`);
+        alert(`${channelName} 채널에 접근 권한이 없습니다.\n${distribution} 채널만 이용 가능합니다.`);
         window.location.href = '/';
         return false;
       }
-      console.log(`[checkChannelAccess] 접근 허용: ${channelCode} 채널`);
+      console.log(`[checkChannelAccess] 접근 허용: ${channelName} 채널`);
       break;
     }
   }
