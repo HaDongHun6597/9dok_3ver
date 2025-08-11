@@ -73,7 +73,12 @@ class AuthClient {
       
       if (response.data && response.data.user) {
         console.log('[getCurrentUser] 응답 성공:', response.data.user.username);
-        return response.data.user;
+        // is_active 필드가 없으면 기본값 true 설정
+        const user = response.data.user;
+        if (user.is_active === undefined) {
+          user.is_active = true;  // 기본값: 활성 사용자
+        }
+        return user;
       }
       throw new Error('사용자 정보가 없습니다.');
     } catch (error) {
