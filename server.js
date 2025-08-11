@@ -433,35 +433,79 @@ app.get('/api/user-info', async (req, res) => {
                      req.headers['x-real-ip'] || 
                      req.connection.remoteAddress ||
                      req.socket.remoteAddress ||
-                     req.ip;
+                     req.ip || '127.0.0.1';
     
-    // 토큰에서 사용자 정보 추출 시도
+    // 기본 사용자 정보
     let userInfo = {
       name: '사용자',
       position: '',
       branch: '',
       company: 'KTCS',
-      ip: clientIp,
-      realIp: req.headers['x-real-ip'] || clientIp
+      ip: clientIp.replace('::ffff:', ''),
+      realIp: (req.headers['x-real-ip'] || clientIp).replace('::ffff:', '')
     };
     
     // 토큰이 있으면 파싱 시도
-    const token = req.headers.authorization?.split(' ')[1];
-    if (token) {
+    const authHeader = req.headers.authorization;
+    console.log('인증 헤더:', authHeader ? '있음' : '없음');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      console.log('토큰 추출됨:', token ? token.substring(0, 20) + '...' : '없음');
+      
       try {
         // authClient를 사용하여 토큰 검증
-        const decoded = await authClient.verifyToken(token);
-        if (decoded) {
-          userInfo.name = decoded.username || decoded.employee_id || '사용자';
-          userInfo.position = decoded.position || '';
-          userInfo.branch = decoded.branch || '';
-          userInfo.company = decoded.company || 'KTCS';
+        const result = authClient.verifyToken(token);
+        console.log('토큰 검증 결과:', result);
+        
+        if (result && result.success && result.user) {
+          const user = result.user;
+          userInfo.name = user.username || user.name || user.employee_id || '사용자';
+          userInfo.position = user.position || user.team || '';
+          userInfo.branch = user.branch || '';
+          userInfo.company = user.company || 'KTCS';
+          
+          console.log('추출된 사용자 정보:', userInfo);
+        } else if (result && result.user) {
+          // success 플래그가 없어도 user 객체가 있으면 사용
+          const user = result.user;
+          userInfo.name = user.username || user.name || user.employee_id || '사용자';
+          userInfo.position = user.position || user.team || '';
+          userInfo.branch = user.branch || '';
+          userInfo.company = user.company || 'KTCS';
+        } else {
+          // 직접 JWT 디코드 시도 (검증 없이)
+          const jwt = require('jsonwebtoken');
+          const decoded = jwt.decode(token);
+          console.log('JWT 디코드 결과:', decoded);
+          
+          if (decoded) {
+            userInfo.name = decoded.username || decoded.name || decoded.employee_id || decoded.sub || '사용자';
+            userInfo.position = decoded.position || decoded.team || '';
+            userInfo.branch = decoded.branch || '';
+            userInfo.company = decoded.company || 'KTCS';
+          }
         }
       } catch (tokenErr) {
-        console.log('토큰 검증 실패, 기본값 사용:', tokenErr.message);
+        console.log('토큰 처리 오류:', tokenErr.message);
+        
+        // 마지막 시도: JWT 디코드만 (검증 없이)
+        try {
+          const jwt = require('jsonwebtoken');
+          const decoded = jwt.decode(token);
+          if (decoded) {
+            userInfo.name = decoded.username || decoded.name || decoded.employee_id || decoded.sub || '사용자';
+            userInfo.position = decoded.position || decoded.team || '';
+            userInfo.branch = decoded.branch || '';
+            userInfo.company = decoded.company || 'KTCS';
+          }
+        } catch (decodeErr) {
+          console.log('JWT 디코드 실패:', decodeErr.message);
+        }
       }
     }
     
+    console.log('최종 사용자 정보:', userInfo);
     res.json(userInfo);
   } catch (err) {
     console.error('사용자 정보 조회 오류:', err);
