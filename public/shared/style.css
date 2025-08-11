@@ -459,7 +459,7 @@ body {
 
 /* 기간별 가격 표시 스타일 */
 .promotion-period .price-label {
-    color: #A50034;
+    color: #666;
     font-weight: 600;
     font-size: 11px;
 }
@@ -485,7 +485,7 @@ body {
 }
 
 .basic-period .price-label {
-    color: #ff9800;
+    color: #666;
     font-weight: 600;
     font-size: 11px;
 }
