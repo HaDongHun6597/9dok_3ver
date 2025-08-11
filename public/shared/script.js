@@ -12,62 +12,130 @@ async function displayWatermark() {
         
         console.log('API 응답 상태:', response.status);
         
+        let userInfoText = '사용자 정보 없음 / KTCS';
+        let ipText = '정보 없음';
+        
         if (response.ok) {
             const userInfo = await response.json();
             console.log('받은 사용자 정보:', userInfo);
             
-            // 기존 워터마크 제거
-            const existingWatermark = document.querySelector('.watermark');
-            if (existingWatermark) {
-                existingWatermark.remove();
-            }
-            
-            // 워터마크 요소 생성
-            const watermark = document.createElement('div');
-            watermark.className = 'watermark';
-            
             // 사용자 정보 구성
-            let userInfoText = userInfo.name || '사용자';
+            userInfoText = userInfo.name || '사용자';
             if (userInfo.position) userInfoText += ` / ${userInfo.position}`;
             if (userInfo.branch) userInfoText += ` / ${userInfo.branch}`;
             userInfoText += ` / ${userInfo.company || 'KTCS'}`;
             
             // IP 정보 (realIp만 사용)
-            const ipText = userInfo.realIp || 'IP 정보 없음';
-            
-            watermark.innerHTML = `
-                <div class="user-info">${userInfoText}</div>
-                <div class="ip-info">${ipText}</div>
-            `;
-            
-            document.body.appendChild(watermark);
-        } else {
-            // 인증 없이도 기본 워터마크 표시
-            const watermark = document.createElement('div');
-            watermark.className = 'watermark';
-            watermark.innerHTML = `
-                <div class="user-info">미인증 사용자 / KTCS</div>
-                <div class="ip-info">정보 없음</div>
-            `;
-            document.body.appendChild(watermark);
+            ipText = userInfo.realIp || 'IP 정보 없음';
         }
+        
+        // 기존 워터마크 컨테이너 제거
+        const existingContainer = document.querySelector('.watermark-container');
+        if (existingContainer) {
+            existingContainer.remove();
+        }
+        
+        // 워터마크 컨테이너 생성
+        const container = document.createElement('div');
+        container.className = 'watermark-container';
+        
+        // 화면 크기 계산
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        
+        // 워터마크 간격 (픽셀)
+        const spacing = 300; // 워터마크 간의 간격
+        
+        // 필요한 워터마크 개수 계산 (여유 있게)
+        const cols = Math.ceil(screenWidth / spacing) + 2;
+        const rows = Math.ceil(screenHeight / spacing) + 2;
+        
+        // 워터마크 생성
+        for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
+                const watermark = document.createElement('div');
+                watermark.className = 'watermark';
+                
+                // 위치 계산 (중앙 정렬을 위한 오프셋)
+                const x = col * spacing - spacing;
+                const y = row * spacing - spacing;
+                
+                watermark.style.left = `${x}px`;
+                watermark.style.top = `${y}px`;
+                watermark.style.transform = 'rotate(-30deg)'; // 7시에서 1시 방향 (약 -30도)
+                
+                watermark.innerHTML = `
+                    <div class="user-info">${userInfoText}</div>
+                    <div class="ip-info">${ipText}</div>
+                `;
+                
+                container.appendChild(watermark);
+            }
+        }
+        
+        document.body.appendChild(container);
+        
     } catch (error) {
         console.error('워터마크 표시 오류:', error);
         // 오류 시에도 기본 워터마크 표시
-        const watermark = document.createElement('div');
-        watermark.className = 'watermark';
-        watermark.innerHTML = `
-            <div class="user-info">사용자 정보 없음 / KTCS</div>
-            <div class="ip-info">정보 없음</div>
-        `;
-        document.body.appendChild(watermark);
+        createDefaultWatermarks();
     }
+}
+
+// 기본 워터마크 생성 함수
+function createDefaultWatermarks() {
+    const existingContainer = document.querySelector('.watermark-container');
+    if (existingContainer) {
+        existingContainer.remove();
+    }
+    
+    const container = document.createElement('div');
+    container.className = 'watermark-container';
+    
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const spacing = 300;
+    const cols = Math.ceil(screenWidth / spacing) + 2;
+    const rows = Math.ceil(screenHeight / spacing) + 2;
+    
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const watermark = document.createElement('div');
+            watermark.className = 'watermark';
+            
+            const x = col * spacing - spacing;
+            const y = row * spacing - spacing;
+            
+            watermark.style.left = `${x}px`;
+            watermark.style.top = `${y}px`;
+            watermark.style.transform = 'rotate(-30deg)';
+            
+            watermark.innerHTML = `
+                <div class="user-info">사용자 정보 없음 / KTCS</div>
+                <div class="ip-info">정보 없음</div>
+            `;
+            
+            container.appendChild(watermark);
+        }
+    }
+    
+    document.body.appendChild(container);
 }
 
 // DOM이 준비되었을 때 워터마크 표시
 document.addEventListener('DOMContentLoaded', () => {
     console.log('워터마크 초기화');
     displayWatermark();
+});
+
+// 화면 크기 변경 시 워터마크 재생성
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        console.log('화면 크기 변경 - 워터마크 재생성');
+        displayWatermark();
+    }, 250); // 250ms 디바운싱
 });
 
 // 전역 함수로 노출

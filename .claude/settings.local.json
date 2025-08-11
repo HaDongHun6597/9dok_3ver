@@ -19,7 +19,10 @@
       "Bash(cmd //c:*)",
       "Bash(mysql:*)",
       "Bash(rm:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(cat:*)",
+      "Bash(nslookup:*)",
+      "Bash(docker logs:*)"
     ],
     "deny": []
   }

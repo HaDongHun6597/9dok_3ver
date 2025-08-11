@@ -1,0 +1,12 @@
+-- auth_db에 CSV 업로드에 필요한 모든 컬럼 추가
+USE auth_db;
+
+-- 컬럼들 추가 (이미 있으면 에러나지만 무시)
+ALTER TABLE users ADD COLUMN company VARCHAR(100) DEFAULT NULL COMMENT '회사';
+ALTER TABLE users ADD COLUMN team VARCHAR(100) DEFAULT NULL COMMENT '팀';
+ALTER TABLE users ADD COLUMN distribution VARCHAR(100) DEFAULT NULL COMMENT '유통';
+ALTER TABLE users ADD COLUMN user_channel VARCHAR(100) DEFAULT NULL COMMENT '채널';
+ALTER TABLE users ADD COLUMN position VARCHAR(100) DEFAULT NULL COMMENT '직책';
+
+-- 확인
+DESCRIBE users;
