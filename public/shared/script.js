@@ -1071,28 +1071,41 @@ function initializeCalculator() {
 
 // 워터마크 표시 함수
 async function displayWatermark() {
+    console.log('워터마크 함수 호출됨');
     try {
+        const token = localStorage.getItem('token');
+        console.log('토큰 존재:', !!token);
+        
         const response = await fetch('/api/user-info', {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${token}`
             }
         });
         
+        console.log('API 응답 상태:', response.status);
+        
         if (response.ok) {
             const userInfo = await response.json();
+            console.log('사용자 정보:', userInfo);
+            
+            // 기존 워터마크 제거
+            const existingWatermark = document.querySelector('.watermark');
+            if (existingWatermark) {
+                existingWatermark.remove();
+            }
             
             // 워터마크 요소 생성
             const watermark = document.createElement('div');
             watermark.className = 'watermark';
             
             // 사용자 정보 구성
-            let userInfoText = userInfo.name;
+            let userInfoText = userInfo.name || '사용자';
             if (userInfo.position) userInfoText += ` / ${userInfo.position}`;
             if (userInfo.branch) userInfoText += ` / ${userInfo.branch}`;
-            userInfoText += ` / ${userInfo.company}`;
+            userInfoText += ` / ${userInfo.company || 'KTCS'}`;
             
             // IP 정보
-            const ipText = `${userInfo.ip} / ${userInfo.realIp}`;
+            const ipText = `${userInfo.ip || 'IP 없음'} / ${userInfo.realIp || 'Real IP 없음'}`;
             
             watermark.innerHTML = `
                 <div class="user-info">${userInfoText}</div>
@@ -1100,9 +1113,28 @@ async function displayWatermark() {
             `;
             
             document.body.appendChild(watermark);
+            console.log('워터마크 추가 완료');
+        } else {
+            console.log('API 응답 실패:', response.status);
+            // 인증 없이도 기본 워터마크 표시
+            const watermark = document.createElement('div');
+            watermark.className = 'watermark';
+            watermark.innerHTML = `
+                <div class="user-info">미인증 사용자 / KTCS</div>
+                <div class="ip-info">IP 정보 없음</div>
+            `;
+            document.body.appendChild(watermark);
         }
     } catch (error) {
         console.error('워터마크 표시 오류:', error);
+        // 오류 시에도 기본 워터마크 표시
+        const watermark = document.createElement('div');
+        watermark.className = 'watermark';
+        watermark.innerHTML = `
+            <div class="user-info">사용자 정보 없음 / KTCS</div>
+            <div class="ip-info">IP 정보 없음</div>
+        `;
+        document.body.appendChild(watermark);
     }
 }
 

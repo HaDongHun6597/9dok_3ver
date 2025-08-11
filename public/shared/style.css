@@ -1425,25 +1425,29 @@ body {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    color: rgba(165, 0, 52, 0.15);
-    font-weight: 700;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    font-size: 32px;
+    color: rgba(165, 0, 52, 0.25);
+    font-weight: 800;
     text-align: center;
     pointer-events: none;
-    z-index: 1;
+    z-index: 1000;
     white-space: nowrap;
     user-select: none;
     font-family: 'Pretendard', sans-serif;
-    line-height: 1.6;
+    line-height: 1.8;
+    text-shadow: 0 0 10px rgba(165, 0, 52, 0.1);
+    letter-spacing: 2px;
 }
 
 .watermark .user-info {
-    font-size: 28px;
-    margin-bottom: 8px;
+    font-size: 36px;
+    margin-bottom: 10px;
+    font-weight: 900;
 }
 
 .watermark .ip-info {
-    font-size: 20px;
-    opacity: 0.8;
+    font-size: 24px;
+    opacity: 0.9;
+    font-weight: 700;
 }
