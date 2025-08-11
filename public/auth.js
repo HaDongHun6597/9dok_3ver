@@ -6,12 +6,6 @@ class AuthClient {
     this.authServerUrl = 'https://auth.lgemart.com/auth';
     this.accessToken = localStorage.getItem('access_token');
     this.refreshToken = localStorage.getItem('refresh_token');
-    console.log('🏗️ AuthClient constructor - tokens loaded:', {
-      accessToken: !!this.accessToken,
-      refreshToken: !!this.refreshToken,
-      path: window.location.pathname,
-      authServerUrl: this.authServerUrl
-    });
   }
 
   async login(employeeId, password) {
@@ -33,7 +27,6 @@ class AuthClient {
       }
 
       const data = await response.json();
-      console.log('Login response data:', data); // 디버깅용
       
       // 토큰 저장 (실제 서버 응답 구조에 맞춤)
       if (data.access_token) {
@@ -64,7 +57,6 @@ class AuthClient {
 
     // 무한 루프 방지
     if (retryCount > 2) {
-      console.log('Too many retries, logging out...');
       this.logout();
       throw new Error('인증이 만료되었습니다. 다시 로그인해주세요.');
     }
@@ -79,14 +71,12 @@ class AuthClient {
       });
 
       if (response.status === 401 || response.status === 403) {
-        console.log(`Token expired or invalid (attempt ${retryCount + 1}), trying to refresh...`);
         
         // 토큰 만료, 갱신 시도
         try {
           await this.refreshAccessToken();
           return this.getCurrentUser(retryCount + 1); // 재시도 (카운트 증가)
         } catch (refreshError) {
-          console.log('Token refresh failed, logging out...');
           // 갱신 실패 시 완전히 로그아웃
           this.logout();
           throw new Error('인증이 만료되었습니다. 다시 로그인해주세요.');
@@ -103,7 +93,6 @@ class AuthClient {
       console.error('Get current user error:', error);
       // 네트워크 오류나 기타 에러의 경우도 로그아웃
       if (retryCount === 0) {
-        console.log('Network or other error, logging out...');
         this.logout();
       }
       throw error;
@@ -152,7 +141,6 @@ class AuthClient {
       }
       localStorage.setItem('access_token', this.accessToken);
       localStorage.setItem('refresh_token', this.refreshToken);
-      console.log('토큰 갱신 성공, 새 액세스 토큰 저장됨');
     } catch (error) {
       console.error('Refresh token error:', error);
       // 토큰 갱신 실패 시 로그인 화면 표시
@@ -248,11 +236,9 @@ class AuthClient {
       });
 
       if (response.status === 401 || response.status === 403) {
-        console.log(`인증 오류 (${response.status}) - 토큰 갱신 시도:`, url);
         // 토큰 만료, 갱신 시도
         try {
           await this.refreshAccessToken();
-          console.log('토큰 갱신 완료, 새 토큰으로 재시도');
           // localStorage에서 새 토큰 다시 로드
           this.accessToken = localStorage.getItem('access_token');
           // 재시도
@@ -288,8 +274,6 @@ const authClient = new AuthClient();
 
 // 채널 접근 권한 제어 함수
 function applyChannelRestrictions(user) {
-  console.log('[applyChannelRestrictions] 채널 제한 적용 시작');
-  console.log('[applyChannelRestrictions] 사용자 채널:', user.user_channel || '없음 (전체 접근 가능)');
   
   // 채널 매핑: distribution 값과 채널 요소 ID
   const channelMap = {
@@ -303,7 +287,6 @@ function applyChannelRestrictions(user) {
   
   // 채널 정보가 없으면 모든 채널 접근 가능
   if (!userChannel) {
-    console.log('[applyChannelRestrictions] 채널 정보 없음 - 모든 채널 활성화');
     Object.values(channelMap).forEach(id => {
       const channelElement = document.getElementById(id);
       if (channelElement) {
@@ -317,7 +300,6 @@ function applyChannelRestrictions(user) {
   }
   
   // 특정 채널만 접근 가능한 경우
-  console.log('[applyChannelRestrictions] 특정 채널만 활성화:', userChannel);
   Object.entries(channelMap).forEach(([channelName, elementId]) => {
     const channelElement = document.getElementById(elementId);
     if (channelElement) {
@@ -327,14 +309,12 @@ function applyChannelRestrictions(user) {
         channelElement.style.pointerEvents = 'auto';
         channelElement.style.cursor = 'pointer';
         channelElement.title = '';
-        console.log(`[applyChannelRestrictions] ${channelName} 채널 활성화`);
       } else {
         // 다른 채널은 비활성화
         channelElement.style.opacity = '0.3';
         channelElement.style.pointerEvents = 'none';
         channelElement.style.cursor = 'not-allowed';
         channelElement.title = '접근 권한이 없습니다';
-        console.log(`[applyChannelRestrictions] ${channelName} 채널 비활성화`);
       }
     }
   });
@@ -350,17 +330,13 @@ function applyChannelRestrictions(user) {
 
 // 채널 페이지 접근 제어 함수
 function checkChannelAccess(user) {
-  console.log('[checkChannelAccess] 채널 접근 권한 확인');
   
   const userChannel = user.user_channel ? user.user_channel.trim() : '';
   const pathname = window.location.pathname;
   
-  console.log('[checkChannelAccess] 사용자 채널:', userChannel || '없음 (전체 접근 가능)');
-  console.log('[checkChannelAccess] 현재 경로:', pathname);
   
   // 채널 정보가 없으면 모든 채널 접근 가능
   if (!userChannel) {
-    console.log('[checkChannelAccess] 채널 정보 없음 - 모든 채널 접근 허용');
     return true;
   }
   
@@ -376,12 +352,10 @@ function checkChannelAccess(user) {
     if (pathname.startsWith(route)) {
       // 접근 권한이 없는 경우
       if (userChannel !== channelName) {
-        console.log(`[checkChannelAccess] 접근 거부: ${channelName} 채널 (사용자는 ${userChannel}만 가능)`);
         alert(`${channelName} 채널에 접근 권한이 없습니다.\n${userChannel} 채널만 이용 가능합니다.`);
         window.location.href = '/';
         return false;
       }
-      console.log(`[checkChannelAccess] 접근 허용: ${channelName} 채널`);
       break;
     }
   }

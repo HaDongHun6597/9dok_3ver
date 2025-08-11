@@ -122,12 +122,6 @@ const channelConfigs = {
 };
 
 // MariaDB 연결
-console.log('데이터베이스 연결 정보:', {
-  host: process.env.DB_HOST || 'idvvbi.com',
-  port: process.env.DB_PORT || 3307,
-  user: process.env.DB_USER || 'app_user',
-  database: process.env.DB_NAME || 'subscription_db'
-});
 
 // MariaDB pool - test-db.js와 동일한 설정 사용
 const pool = mariadb.createPool({
@@ -196,7 +190,6 @@ app.get('/api/categories', async (req, res) => {
   
   while (retryCount <= maxRetries) {
     try {
-      console.log(`[categories] 인증 서버 요청 (시도 ${retryCount + 1}/${maxRetries + 1})`);
       const response = await axios.get(`${authClient.authServerUrl}/user/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -206,7 +199,6 @@ app.get('/api/categories', async (req, res) => {
       
       if (response.data && response.data.user) {
         req.user = response.data.user;
-        console.log('[categories] 인증 성공:', req.user.username);
         break; // 성공하면 루프 종료
       }
     } catch (error) {
@@ -230,7 +222,6 @@ app.get('/api/categories', async (req, res) => {
     const channel = getChannelFromRequest(req);
     const tableName = channelConfigs[channel].dataTable;
     
-    console.log(`Categories API - Channel: ${channel}, Table: ${tableName}`);
     
     conn = await pool.getConnection();
     
@@ -251,9 +242,7 @@ app.get('/api/categories', async (req, res) => {
       params = [];
     }
     
-    console.log(`Executing query: ${query}`, params);
     const rows = await conn.query(query, params);
-    console.log(`Found ${rows.length} categories`);
     
     res.json(rows.map(row => row.제품군).filter(Boolean));
   } catch (err) {
@@ -269,7 +258,6 @@ app.get('/api/products/find-exact', authenticateToken(authClient), requireActive
   let conn;
   try {
     const filters = req.query;
-    console.log('받은 필터:', filters);
     
     // 채널 감지 및 테이블 선택
     const channel = getChannelFromRequest(req);
@@ -286,7 +274,6 @@ app.get('/api/products/find-exact', authenticateToken(authClient), requireActive
       if (allowedFields.includes(key) && filters[key]) {
         // 특별한 값들을 빈 값으로 변환해서 검색
         let searchValue = filters[key];
-        console.log(`필터 적용: ${key} = ${searchValue}`);
         
         if (searchValue === '방문없음' || searchValue === '선납없음' || searchValue === '관리없음' || searchValue === '정보없음') {
           query += ` AND (\`${key}\` = '' OR \`${key}\` IS NULL)`;
@@ -298,15 +285,8 @@ app.get('/api/products/find-exact', authenticateToken(authClient), requireActive
     });
     
     query += ' LIMIT 10';
-    console.log('실행 쿼리:', query);
-    console.log('파라미터:', params);
     
     const rows = await conn.query(query, params);
-    console.log('검색 결과 개수:', rows.length);
-    
-    if (rows.length > 0) {
-      console.log('첫 번째 결과:', rows[0]);
-    }
     
     res.json(rows);
   } catch (err) {
@@ -350,7 +330,6 @@ app.get('/api/product-options/:field', authenticateToken(authClient), requireAct
     const field = decodeURIComponent(req.params.field);
     const filters = req.query;
     
-    console.log('요청된 필드:', field);
     
     conn = await pool.getConnection();
     
@@ -587,7 +566,6 @@ app.get('/api/user-info', async (req, res) => {
                       clientIp.startsWith('10.') || 
                       clientIp.startsWith('172.');
     
-    console.log('클라이언트 IP:', clientIp, '로컬 IP 여부:', isLocalIp);
     
     // 로컬 환경에서는 외부 서비스를 통해 실제 공인 IP 가져오기
     if (isLocalIp) {
@@ -596,10 +574,8 @@ app.get('/api/user-info', async (req, res) => {
         const ipResponse = await axios.get('https://api.ipify.org?format=json', { timeout: 3000 });
         if (ipResponse.data && ipResponse.data.ip) {
           realPublicIp = ipResponse.data.ip;
-          console.log('공인 IP (ipify):', realPublicIp);
         }
       } catch (ipError) {
-        console.log('공인 IP 조회 실패:', ipError.message);
         // 실패 시 클라이언트 IP 그대로 사용
       }
     }

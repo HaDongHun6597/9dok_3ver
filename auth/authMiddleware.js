@@ -60,9 +60,6 @@ class AuthClient {
   async getCurrentUser(accessToken) {
     const axios = require('axios');
     try {
-      console.log('[getCurrentUser] 요청 시작:', `${this.authServerUrl}/user/profile`);
-      console.log('[getCurrentUser] 토큰 길이:', accessToken.length);
-      console.log('[getCurrentUser] 토큰 앞부분:', accessToken.substring(0, 50));
       
       const response = await axios.get(`${this.authServerUrl}/user/profile`, {
         headers: {
@@ -72,7 +69,6 @@ class AuthClient {
       });
       
       if (response.data && response.data.user) {
-        console.log('[getCurrentUser] 응답 성공:', response.data.user.username);
         // is_active 필드가 없으면 기본값 true 설정
         const user = response.data.user;
         if (user.is_active === undefined) {
@@ -128,12 +124,7 @@ function authenticateToken(authClient) {
 
     // auth-system에 토큰 검증 요청 (pass-through)
     try {
-      console.log('토큰 검증 시작:', token.substring(0, 20) + '...');
-      console.log('authenticateToken - 토큰 길이:', token.length);
-      console.log('authenticateToken - 토큰 첫 50자:', token.substring(0, 50));
-      console.log('authenticateToken - 토큰 마지막 20자:', token.substring(token.length - 20));
       const user = await authClient.getCurrentUser(token);
-      console.log('토큰 검증 성공, 사용자:', user.username);
       req.user = user;
       next();
     } catch (error) {
@@ -154,14 +145,7 @@ function requireAdmin(req, res, next) {
 
 // 활성 사용자 확인 미들웨어
 function requireActiveUser(req, res, next) {
-  console.log('[requireActiveUser] 사용자 상태:', {
-    user: req.user ? '있음' : '없음',
-    is_active: req.user?.is_active,
-    username: req.user?.username
-  });
-  
   if (!req.user || !req.user.is_active) {
-    console.log('[requireActiveUser] 비활성 사용자로 차단됨');
     return res.status(403).json({ error: '비활성 사용자입니다.' });
   }
   next();

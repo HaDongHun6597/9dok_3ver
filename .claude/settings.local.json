@@ -22,7 +22,8 @@
       "Bash(git pull:*)",
       "Bash(cat:*)",
       "Bash(nslookup:*)",
-      "Bash(docker logs:*)"
+      "Bash(docker logs:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }
