@@ -142,7 +142,7 @@ const pool = mariadb.createPool({
 
 // API 라우트 (인증 필요)
 // 모든 제품 조회
-app.get('/api/products', authenticateToken(authClient), requireActiveUser, validateChannelAccess, async (req, res) => {
+app.get('/api/products', authenticateToken(authClient), requireActiveUser, async (req, res) => {
   let conn;
   try {
     const { category, search, page = 1, limit = 50 } = req.query;
@@ -285,7 +285,7 @@ app.get('/api/categories', async (req, res) => {
 });
 
 // 정확한 조건으로 제품 찾기 (먼저 배치)
-app.get('/api/products/find-exact', authenticateToken(authClient), requireActiveUser, validateChannelAccess, async (req, res) => {
+app.get('/api/products/find-exact', authenticateToken(authClient), requireActiveUser, async (req, res) => {
   let conn;
   try {
     const filters = req.query;
@@ -338,7 +338,7 @@ app.get('/api/products/find-exact', authenticateToken(authClient), requireActive
 });
 
 // 특정 제품 상세 조회
-app.get('/api/products/:id', authenticateToken(authClient), requireActiveUser, validateChannelAccess, async (req, res) => {
+app.get('/api/products/:id', authenticateToken(authClient), requireActiveUser, async (req, res) => {
   let conn;
   try {
     const { id } = req.params;
