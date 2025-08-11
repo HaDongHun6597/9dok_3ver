@@ -72,6 +72,45 @@ function getChannelFromRequest(req) {
     return 'em'; // 기본값: 이마트
 }
 
+// 채널 접근 권한 검증 미들웨어
+function validateChannelAccess(req, res, next) {
+    // 사용자 정보가 없으면 통과 (인증 미들웨어에서 처리)
+    if (!req.user) {
+        return next();
+    }
+    
+    // 사용자의 distribution 정보 가져오기
+    const userDistribution = req.user.distribution ? req.user.distribution.trim().toLowerCase() : '';
+    
+    // distribution이 없으면 모든 채널 접근 가능
+    if (!userDistribution) {
+        console.log('[validateChannelAccess] 유통 정보 없음 - 모든 채널 접근 허용');
+        return next();
+    }
+    
+    // 현재 요청된 채널 확인
+    const requestedChannel = getChannelFromRequest(req);
+    
+    console.log('[validateChannelAccess] 사용자 유통:', userDistribution, '/ 요청 채널:', requestedChannel);
+    
+    // 채널 접근 권한 검증
+    if (userDistribution !== requestedChannel) {
+        const channelNames = {
+            'em': '이마트',
+            'hp': '홈플러스',
+            'et': '전자랜드'
+        };
+        
+        console.log(`[validateChannelAccess] 접근 거부: ${channelNames[requestedChannel]} 채널 (사용자는 ${channelNames[userDistribution]}만 가능)`);
+        return res.status(403).json({ 
+            error: `${channelNames[requestedChannel]} 채널에 접근 권한이 없습니다. ${channelNames[userDistribution]} 채널만 이용 가능합니다.`
+        });
+    }
+    
+    console.log('[validateChannelAccess] 채널 접근 허용');
+    next();
+}
+
 // 채널 설정 (향후 hp, et 테이블 추가 시 수정)
 const channelConfigs = {
     em: { name: '이마트', dataTable: 'products' },
@@ -100,7 +139,7 @@ const pool = mariadb.createPool({
 
 // API 라우트 (인증 필요)
 // 모든 제품 조회
-app.get('/api/products', authenticateToken(authClient), requireActiveUser, async (req, res) => {
+app.get('/api/products', authenticateToken(authClient), requireActiveUser, validateChannelAccess, async (req, res) => {
   let conn;
   try {
     const { category, search, page = 1, limit = 50 } = req.query;
@@ -180,6 +219,23 @@ app.get('/api/categories', async (req, res) => {
     }
   }
   
+  // 채널 접근 권한 검증
+  const userDistribution = req.user.distribution ? req.user.distribution.trim().toLowerCase() : '';
+  const requestedChannel = getChannelFromRequest(req);
+  
+  if (userDistribution && userDistribution !== requestedChannel) {
+    const channelNames = {
+      'em': '이마트',
+      'hp': '홈플러스',
+      'et': '전자랜드'
+    };
+    
+    console.log(`[categories] 채널 접근 거부: ${channelNames[requestedChannel]} (사용자: ${channelNames[userDistribution]})`);
+    return res.status(403).json({ 
+      error: `${channelNames[requestedChannel]} 채널에 접근 권한이 없습니다.`
+    });
+  }
+  
   // 원래 로직
   let conn;
   try {
@@ -222,7 +278,7 @@ app.get('/api/categories', async (req, res) => {
 });
 
 // 정확한 조건으로 제품 찾기 (먼저 배치)
-app.get('/api/products/find-exact', authenticateToken(authClient), requireActiveUser, async (req, res) => {
+app.get('/api/products/find-exact', authenticateToken(authClient), requireActiveUser, validateChannelAccess, async (req, res) => {
   let conn;
   try {
     const filters = req.query;
@@ -275,7 +331,7 @@ app.get('/api/products/find-exact', authenticateToken(authClient), requireActive
 });
 
 // 특정 제품 상세 조회
-app.get('/api/products/:id', authenticateToken(authClient), requireActiveUser, async (req, res) => {
+app.get('/api/products/:id', authenticateToken(authClient), requireActiveUser, validateChannelAccess, async (req, res) => {
   let conn;
   try {
     const { id } = req.params;

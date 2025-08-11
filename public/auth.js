@@ -288,103 +288,119 @@ const authClient = new AuthClient();
 
 // 채널 접근 권한 제어 함수
 function applyChannelRestrictions(user) {
-  // 임시로 모든 채널 활성화
-  console.log('[applyChannelRestrictions] 채널 제한 임시 해제');
+  console.log('[applyChannelRestrictions] 채널 제한 적용 시작');
+  console.log('[applyChannelRestrictions] 사용자 유통:', user.distribution || '없음 (전체 접근 가능)');
   
+  // 채널 매핑: distribution 값과 채널 요소 ID
   const channelMap = {
-    '이마트': 'channel-em',
-    '홈플러스': 'channel-hp',
-    '전자랜드': 'channel-et'
+    'em': 'channel-em',     // 이마트
+    'hp': 'channel-hp',     // 홈플러스
+    'et': 'channel-et'      // 전자랜드
   };
   
-  // 모든 채널 활성화
-  Object.values(channelMap).forEach(id => {
-    const channelElement = document.getElementById(id);
-    if (channelElement) {
-      channelElement.style.opacity = '1';
-      channelElement.style.pointerEvents = 'auto';
-      channelElement.style.cursor = 'pointer';
-      channelElement.title = '';
-    }
-  });
-  
-  return;
-  
-  /* 원래 코드 주석처리
-  // 유통 정보 가져오기
-  const distribution = user.distribution ? user.distribution.trim() : '';
+  // 유통 정보 가져오기 (없으면 빈 문자열)
+  const distribution = user.distribution ? user.distribution.trim().toLowerCase() : '';
   
   // 유통 정보가 없으면 모든 채널 접근 가능
   if (!distribution) {
+    console.log('[applyChannelRestrictions] 유통 정보 없음 - 모든 채널 활성화');
+    Object.values(channelMap).forEach(id => {
+      const channelElement = document.getElementById(id);
+      if (channelElement) {
+        channelElement.style.opacity = '1';
+        channelElement.style.pointerEvents = 'auto';
+        channelElement.style.cursor = 'pointer';
+        channelElement.title = '';
+      }
+    });
     return;
   }
   
   // 특정 유통만 접근 가능한 경우
-  Object.entries(channelMap).forEach(([name, id]) => {
-    const channelElement = document.getElementById(id);
+  console.log('[applyChannelRestrictions] 특정 채널만 활성화:', distribution);
+  Object.entries(channelMap).forEach(([channelCode, elementId]) => {
+    const channelElement = document.getElementById(elementId);
     if (channelElement) {
-      if (distribution === name) {
+      if (distribution === channelCode) {
         // 해당 채널만 활성화
         channelElement.style.opacity = '1';
         channelElement.style.pointerEvents = 'auto';
         channelElement.style.cursor = 'pointer';
+        channelElement.title = '';
+        console.log(`[applyChannelRestrictions] ${channelCode} 채널 활성화`);
       } else {
         // 다른 채널은 비활성화
         channelElement.style.opacity = '0.3';
         channelElement.style.pointerEvents = 'none';
         channelElement.style.cursor = 'not-allowed';
         channelElement.title = '접근 권한이 없습니다';
+        console.log(`[applyChannelRestrictions] ${channelCode} 채널 비활성화`);
       }
     }
   });
   
   // 유통 정보가 있는 경우 안내 메시지 업데이트
   if (distribution) {
+    const channelNames = {
+      'em': '이마트',
+      'hp': '홈플러스',
+      'et': '전자랜드'
+    };
+    const channelName = channelNames[distribution] || distribution;
     const subtitle = document.getElementById('subtitle');
     if (subtitle) {
-      subtitle.textContent = `${distribution} 채널만 이용 가능합니다`;
+      subtitle.textContent = `${channelName} 채널만 이용 가능합니다`;
     }
   }
-  */
 }
 
 // 채널 페이지 접근 제어 함수
 function checkChannelAccess(user) {
-  // 임시로 모든 채널 접근 허용
-  console.log('[checkChannelAccess] 채널 접근 제한 임시 해제');
-  return true;
+  console.log('[checkChannelAccess] 채널 접근 권한 확인');
   
-  /* 원래 코드 주석처리
-  const distribution = user.distribution ? user.distribution.trim() : '';
+  const distribution = user.distribution ? user.distribution.trim().toLowerCase() : '';
   const pathname = window.location.pathname;
+  
+  console.log('[checkChannelAccess] 사용자 유통:', distribution || '없음 (전체 접근 가능)');
+  console.log('[checkChannelAccess] 현재 경로:', pathname);
   
   // 유통 정보가 없으면 모든 채널 접근 가능
   if (!distribution) {
+    console.log('[checkChannelAccess] 유통 정보 없음 - 모든 채널 접근 허용');
     return true;
   }
   
   // 현재 채널과 유통 정보 매칭
   const channelRoutes = {
-    '이마트': '/em',
-    '홈플러스': '/hp',
-    '전자랜드': '/et'
+    'em': '/em',      // 이마트
+    'hp': '/hp',      // 홈플러스
+    'et': '/et'       // 전자랜드
   };
   
   // 현재 페이지가 채널 페이지인지 확인
-  for (const [name, route] of Object.entries(channelRoutes)) {
+  for (const [channelCode, route] of Object.entries(channelRoutes)) {
     if (pathname.startsWith(route)) {
       // 접근 권한이 없는 경우
-      if (distribution !== name) {
-        alert(`${name} 채널에 접근 권한이 없습니다.\n${distribution} 채널만 이용 가능합니다.`);
+      if (distribution !== channelCode) {
+        const channelNames = {
+          'em': '이마트',
+          'hp': '홈플러스',
+          'et': '전자랜드'
+        };
+        const currentChannelName = channelNames[channelCode] || channelCode;
+        const userChannelName = channelNames[distribution] || distribution;
+        
+        console.log(`[checkChannelAccess] 접근 거부: ${currentChannelName} 채널 (사용자는 ${userChannelName}만 가능)`);
+        alert(`${currentChannelName} 채널에 접근 권한이 없습니다.\n${userChannelName} 채널만 이용 가능합니다.`);
         window.location.href = '/';
         return false;
       }
+      console.log(`[checkChannelAccess] 접근 허용: ${channelCode} 채널`);
       break;
     }
   }
   
   return true;
-  */
 }
 
 // 로그인 폼 처리
