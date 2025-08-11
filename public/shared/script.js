@@ -1071,10 +1071,9 @@ function initializeCalculator() {
 
 // 워터마크 표시 함수
 async function displayWatermark() {
-    console.log('워터마크 함수 호출됨');
     try {
         const token = localStorage.getItem('token');
-        console.log('토큰 존재:', !!token);
+        console.log('토큰:', token ? '있음' : '없음');
         
         const response = await fetch('/api/user-info', {
             headers: {
@@ -1086,7 +1085,7 @@ async function displayWatermark() {
         
         if (response.ok) {
             const userInfo = await response.json();
-            console.log('사용자 정보:', userInfo);
+            console.log('받은 사용자 정보:', userInfo);
             
             // 기존 워터마크 제거
             const existingWatermark = document.querySelector('.watermark');
@@ -1113,9 +1112,7 @@ async function displayWatermark() {
             `;
             
             document.body.appendChild(watermark);
-            console.log('워터마크 추가 완료');
         } else {
-            console.log('API 응답 실패:', response.status);
             // 인증 없이도 기본 워터마크 표시
             const watermark = document.createElement('div');
             watermark.className = 'watermark';
@@ -1142,35 +1139,11 @@ async function displayWatermark() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded 이벤트 발생');
     
-    // 즉시 간단한 워터마크 표시 (테스트용)
-    const testWatermark = document.createElement('div');
-    testWatermark.className = 'watermark';
-    testWatermark.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); font-size: 40px; color: rgba(165, 0, 52, 0.3); font-weight: 900; z-index: 9999; pointer-events: none;';
-    testWatermark.innerHTML = `
-        <div style="font-size: 40px; margin-bottom: 10px;">테스트 워터마크</div>
-        <div style="font-size: 28px;">KTCS / 2024</div>
-    `;
-    document.body.appendChild(testWatermark);
-    console.log('테스트 워터마크 추가됨');
-    
-    // 실제 워터마크 표시 시도
-    setTimeout(() => {
-        displayWatermark(); // 워터마크 표시
-    }, 1000);
+    // 워터마크 표시
+    displayWatermark();
     
     initializeCalculator();
 });
 
 // 전역에서 템플릿 로드 후 호출할 수 있는 함수
 window.initializeCalculator = initializeCalculator;
-
-// 페이지 로드 완료 후에도 한번 더 시도
-window.addEventListener('load', () => {
-    console.log('window load 이벤트 발생');
-    setTimeout(() => {
-        if (!document.querySelector('.watermark')) {
-            console.log('워터마크가 없어서 다시 시도');
-            displayWatermark();
-        }
-    }, 2000);
-});

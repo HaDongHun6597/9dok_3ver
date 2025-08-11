@@ -1427,7 +1427,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%) rotate(-15deg);
     font-size: 32px;
-    color: rgba(165, 0, 52, 0.25);
+    color: rgba(165, 0, 52, 0.12);
     font-weight: 800;
     text-align: center;
     pointer-events: none;
@@ -1436,7 +1436,7 @@ body {
     user-select: none;
     font-family: 'Pretendard', sans-serif;
     line-height: 1.8;
-    text-shadow: 0 0 10px rgba(165, 0, 52, 0.1);
+    text-shadow: 0 0 10px rgba(165, 0, 52, 0.05);
     letter-spacing: 2px;
 }
 
