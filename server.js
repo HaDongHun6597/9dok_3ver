@@ -72,47 +72,47 @@ function getChannelFromRequest(req) {
     return 'em'; // 기본값: 이마트
 }
 
-// 채널 접근 권한 검증 미들웨어
-function validateChannelAccess(req, res, next) {
-    // 사용자 정보가 없으면 통과 (인증 미들웨어에서 처리)
-    if (!req.user) {
-        return next();
-    }
-    
-    // 사용자의 user_channel 정보 가져오기
-    const userChannel = req.user.user_channel ? req.user.user_channel.trim() : '';
-    
-    // user_channel이 없으면 모든 채널 접근 가능
-    if (!userChannel) {
-        console.log('[validateChannelAccess] 채널 정보 없음 - 모든 채널 접근 허용');
-        return next();
-    }
-    
-    // 현재 요청된 채널 확인
-    const requestedChannel = getChannelFromRequest(req);
-    
-    // 채널 이름 매핑
-    const channelNames = {
-        'em': '이마트',
-        'hp': '홈플러스',
-        'et': '전자랜드'
-    };
-    
-    const requestedChannelName = channelNames[requestedChannel];
-    
-    console.log('[validateChannelAccess] 사용자 채널:', userChannel, '/ 요청 채널:', requestedChannelName);
-    
-    // 채널 접근 권한 검증 (한글 이름으로 비교)
-    if (userChannel !== requestedChannelName) {
-        console.log(`[validateChannelAccess] 접근 거부: ${requestedChannelName} 채널 (사용자는 ${userChannel}만 가능)`);
-        return res.status(403).json({ 
-            error: `${requestedChannelName} 채널에 접근 권한이 없습니다. ${userChannel} 채널만 이용 가능합니다.`
-        });
-    }
-    
-    console.log('[validateChannelAccess] 채널 접근 허용');
-    next();
-}
+// 채널 접근 권한 검증 미들웨어 (현재 사용하지 않음 - 채널 페이지 진입 시 클라이언트에서만 체크)
+// function validateChannelAccess(req, res, next) {
+//     // 사용자 정보가 없으면 통과 (인증 미들웨어에서 처리)
+//     if (!req.user) {
+//         return next();
+//     }
+//     
+//     // 사용자의 user_channel 정보 가져오기
+//     const userChannel = req.user.user_channel ? req.user.user_channel.trim() : '';
+//     
+//     // user_channel이 없으면 모든 채널 접근 가능
+//     if (!userChannel) {
+//         console.log('[validateChannelAccess] 채널 정보 없음 - 모든 채널 접근 허용');
+//         return next();
+//     }
+//     
+//     // 현재 요청된 채널 확인
+//     const requestedChannel = getChannelFromRequest(req);
+//     
+//     // 채널 이름 매핑
+//     const channelNames = {
+//         'em': '이마트',
+//         'hp': '홈플러스',
+//         'et': '전자랜드'
+//     };
+//     
+//     const requestedChannelName = channelNames[requestedChannel];
+//     
+//     console.log('[validateChannelAccess] 사용자 채널:', userChannel, '/ 요청 채널:', requestedChannelName);
+//     
+//     // 채널 접근 권한 검증 (한글 이름으로 비교)
+//     if (userChannel !== requestedChannelName) {
+//         console.log(`[validateChannelAccess] 접근 거부: ${requestedChannelName} 채널 (사용자는 ${userChannel}만 가능)`);
+//         return res.status(403).json({ 
+//             error: `${requestedChannelName} 채널에 접근 권한이 없습니다. ${userChannel} 채널만 이용 가능합니다.`
+//         });
+//     }
+//     
+//     console.log('[validateChannelAccess] 채널 접근 허용');
+//     next();
+// }
 
 // 채널 설정 (향후 hp, et 테이블 추가 시 수정)
 const channelConfigs = {
@@ -222,27 +222,7 @@ app.get('/api/categories', async (req, res) => {
     }
   }
   
-  // 채널 접근 권한 검증
-  const userChannel = req.user.user_channel ? req.user.user_channel.trim() : '';
-  const requestedChannel = getChannelFromRequest(req);
-  
-  // 채널 이름 매핑
-  const channelNames = {
-    'em': '이마트',
-    'hp': '홈플러스',
-    'et': '전자랜드'
-  };
-  
-  const requestedChannelName = channelNames[requestedChannel];
-  
-  // user_channel이 있고 요청된 채널과 다르면 접근 거부
-  if (userChannel && userChannel !== requestedChannelName) {
-    console.log(`[categories] 채널 접근 거부: ${requestedChannelName} (사용자: ${userChannel})`);
-    return res.status(403).json({ 
-      error: `${requestedChannelName} 채널에 접근 권한이 없습니다.`
-    });
-  }
-  
+  // 채널별 데이터 필터링 (채널 접근 권한은 클라이언트에서 체크)
   // 원래 로직
   let conn;
   try {
