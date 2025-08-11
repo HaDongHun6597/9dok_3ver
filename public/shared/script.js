@@ -1141,9 +1141,36 @@ async function displayWatermark() {
 // DOM이 준비되었을 때 초기화
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded 이벤트 발생');
-    displayWatermark(); // 워터마크 표시
+    
+    // 즉시 간단한 워터마크 표시 (테스트용)
+    const testWatermark = document.createElement('div');
+    testWatermark.className = 'watermark';
+    testWatermark.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); font-size: 40px; color: rgba(165, 0, 52, 0.3); font-weight: 900; z-index: 9999; pointer-events: none;';
+    testWatermark.innerHTML = `
+        <div style="font-size: 40px; margin-bottom: 10px;">테스트 워터마크</div>
+        <div style="font-size: 28px;">KTCS / 2024</div>
+    `;
+    document.body.appendChild(testWatermark);
+    console.log('테스트 워터마크 추가됨');
+    
+    // 실제 워터마크 표시 시도
+    setTimeout(() => {
+        displayWatermark(); // 워터마크 표시
+    }, 1000);
+    
     initializeCalculator();
 });
 
 // 전역에서 템플릿 로드 후 호출할 수 있는 함수
 window.initializeCalculator = initializeCalculator;
+
+// 페이지 로드 완료 후에도 한번 더 시도
+window.addEventListener('load', () => {
+    console.log('window load 이벤트 발생');
+    setTimeout(() => {
+        if (!document.querySelector('.watermark')) {
+            console.log('워터마크가 없어서 다시 시도');
+            displayWatermark();
+        }
+    }, 2000);
+});
