@@ -44,7 +44,7 @@ async function displayWatermark() {
         const screenHeight = window.innerHeight;
         
         // 워터마크 간격 (픽셀)
-        const spacing = 300; // 워터마크 간의 간격
+        const spacing = 450; // 워터마크 간의 간격 (더 넓게)
         
         // 필요한 워터마크 개수 계산 (여유 있게)
         const cols = Math.ceil(screenWidth / spacing) + 2;
@@ -62,7 +62,7 @@ async function displayWatermark() {
                 
                 watermark.style.left = `${x}px`;
                 watermark.style.top = `${y}px`;
-                watermark.style.transform = 'rotate(-30deg)'; // 7시에서 1시 방향 (약 -30도)
+                watermark.style.transform = 'rotate(-45deg)'; // 6시 30분에서 12시 30분 방향 (약 -45도)
                 
                 watermark.innerHTML = `
                     <div class="user-info">${userInfoText}</div>
@@ -94,7 +94,7 @@ function createDefaultWatermarks() {
     
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
-    const spacing = 300;
+    const spacing = 450; // 더 넓은 간격
     const cols = Math.ceil(screenWidth / spacing) + 2;
     const rows = Math.ceil(screenHeight / spacing) + 2;
     
@@ -108,7 +108,7 @@ function createDefaultWatermarks() {
             
             watermark.style.left = `${x}px`;
             watermark.style.top = `${y}px`;
-            watermark.style.transform = 'rotate(-30deg)';
+            watermark.style.transform = 'rotate(-45deg)'; // 더 경사진 각도
             
             watermark.innerHTML = `
                 <div class="user-info">사용자 정보 없음 / KTCS</div>

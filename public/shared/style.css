@@ -1435,28 +1435,28 @@ body {
 /* 워터마크 스타일 */
 .watermark {
     position: absolute;
-    font-size: 14px;
-    color: rgba(165, 0, 52, 0.08);
+    font-size: 18px;
+    color: rgba(128, 128, 128, 0.12); /* 회색으로 변경 */
     font-weight: 700;
     text-align: center;
     pointer-events: none;
     white-space: nowrap;
     user-select: none;
     font-family: 'Pretendard', sans-serif;
-    line-height: 1.4;
-    text-shadow: 0 0 8px rgba(165, 0, 52, 0.03);
-    letter-spacing: 1px;
+    line-height: 1.5;
+    text-shadow: 0 0 10px rgba(128, 128, 128, 0.05);
+    letter-spacing: 2px;
     transform-origin: center center;
 }
 
 .watermark .user-info {
-    font-size: 16px;
-    margin-bottom: 4px;
+    font-size: 24px; /* 더 크게 */
+    margin-bottom: 8px;
     font-weight: 800;
 }
 
 .watermark .ip-info {
-    font-size: 12px;
-    opacity: 0.8;
+    font-size: 18px; /* 더 크게 */
+    opacity: 0.85;
     font-weight: 600;
 }
