@@ -2,6 +2,10 @@ const express = require('express');
 const mariadb = require('mariadb');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
+const csv = require('csv-parser');
+const fs = require('fs');
+const unzipper = require('unzipper');
 
 // 인증 관련 모듈 추가
 const authRoutes = require('./auth/authRoutes');
@@ -15,7 +19,8 @@ const authClient = new AuthClient();
 
 // 미들웨어
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // 채널별 라우팅 설정
 app.use('/em', express.static('public/em'));        // 이마트
@@ -32,6 +37,14 @@ app.use('/product-modal.js', express.static('public/product-modal.js'));
 app.use('/auth.js', express.static('public/auth.js'));
 app.use('/ktcs_logo_black.png', express.static('public/ktcs_logo_black.png'));
 app.use('/ktcs_logo_white.png', express.static('public/ktcs_logo_white.png'));
+
+// 관리자 페이지 라우트
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
+});
+
+// 관리자 페이지 정적 파일 서빙
+app.use('/admin', express.static('public/admin'));
 
 // 인증 라우트 추가
 app.use('/auth', authRoutes);
@@ -80,8 +93,8 @@ app.get('/api/products', authenticateToken(authClient), requireActiveUser, async
     
     conn = await pool.getConnection();
     
-    let query = `SELECT * FROM ${tableName} WHERE 1=1`;
-    let params = [];
+    let query = `SELECT * FROM ${tableName} WHERE channel = ?`;
+    let params = [channel];
     
     if (category && category !== 'all') {
       query += ' AND 제품군 = ?';
@@ -114,7 +127,7 @@ app.get('/api/categories', authenticateToken(authClient), requireActiveUser, asy
     const tableName = channelConfigs[channel].dataTable;
     
     conn = await pool.getConnection();
-    const rows = await conn.query(`SELECT DISTINCT 제품군 FROM ${tableName} ORDER BY 제품군`);
+    const rows = await conn.query(`SELECT DISTINCT 제품군 FROM ${tableName} WHERE channel = ? ORDER BY 제품군`, [channel]);
     res.json(rows.map(row => row.제품군).filter(Boolean));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -136,8 +149,8 @@ app.get('/api/products/find-exact', authenticateToken(authClient), requireActive
     
     conn = await pool.getConnection();
     
-    let query = `SELECT * FROM ${tableName} WHERE 1=1`;
-    let params = [];
+    let query = `SELECT * FROM ${tableName} WHERE channel = ?`;
+    let params = [channel];
     
     const allowedFields = ['제품군', '모델명', '결합유형', '계약기간', '관리유형', '방문주기', '선납'];
     
@@ -223,8 +236,17 @@ app.get('/api/product-options/:field', authenticateToken(authClient), requireAct
     const channel = getChannelFromRequest(req);
     const tableName = channelConfigs[channel].dataTable;
     
-    let query = `SELECT DISTINCT \`${field}\` FROM ${tableName} WHERE 1=1`;
+    // 모델명 필드인 경우 활성화 정보도 함께 가져오기
+    let query;
     let params = [];
+    
+    if (field === '모델명') {
+      query = `SELECT DISTINCT \`${field}\`, 활성화 FROM ${tableName} WHERE channel = ?`;
+      params.push(channel);
+    } else {
+      query = `SELECT DISTINCT \`${field}\` FROM ${tableName} WHERE channel = ?`;
+      params.push(channel);
+    }
     
     // 필터 조건 추가
     Object.keys(filters).forEach(key => {
@@ -240,32 +262,60 @@ app.get('/api/product-options/:field', authenticateToken(authClient), requireAct
       }
     });
     
-    query += ` ORDER BY \`${field}\``;
+    // 모델명인 경우 활성화가 있는 것을 우선 정렬 (1 이하는 활성화 없는 것으로 처리)
+    if (field === '모델명') {
+      query += ` ORDER BY CASE WHEN 활성화 IS NOT NULL AND 활성화 != '' AND 활성화 != '0' AND CAST(활성화 AS SIGNED) > 1 THEN 0 ELSE 1 END, \`${field}\``;
+    } else {
+      query += ` ORDER BY \`${field}\``;
+    }
     
     const rows = await conn.query(query, params);
-    let options = rows.map(row => row[field]);
+    let options;
     
-    // 빈 값이나 null 값을 적절한 기본값으로 변경
-    options = options.map(option => {
-      if (!option || option.trim() === '') {
-        switch(field) {
-          case '관리유형':
-            return '관리없음';
-          case '방문주기':
-            return '방문없음';
-          case '선납':
-            return '선납없음';
-          default:
-            return '정보없음';
+    // 모델명인 경우 활성화 정보와 함께 반환
+    if (field === '모델명') {
+      options = rows;  // 객체 배열로 반환 {모델명, 활성화}
+    } else {
+      options = rows.map(row => row[field]);
+    }
+    
+    // 빈 값이나 null 값을 적절한 기본값으로 변경 (모델명이 아닌 경우에만)
+    if (field !== '모델명') {
+        options = options.map(option => {
+        if (!option || option.trim() === '') {
+          switch(field) {
+            case '관리유형':
+              return '관리없음';
+            case '방문주기':
+              return '방문없음';
+            case '선납':
+              return '선납없음';
+            default:
+              return '정보없음';
+          }
         }
-      }
-      return option;
-    });
-    
-    // 중복 제거
-    const uniqueOptions = [...new Set(options)];
-    
-    res.json(uniqueOptions);
+        return option;
+      });
+      
+      // 중복 제거
+      const uniqueOptions = [...new Set(options)];
+      res.json(uniqueOptions);
+    } else {
+      // 모델명인 경우 중복 제거 및 활성화 정보 유지
+      const modelMap = new Map();
+      rows.forEach(row => {
+        if (!modelMap.has(row['모델명'])) {
+          modelMap.set(row['모델명'], row['활성화']);
+        }
+      });
+      
+      const uniqueModels = Array.from(modelMap, ([model, activation]) => ({
+        model: model,
+        activation: activation
+      }));
+      
+      res.json(uniqueModels);
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   } finally {
@@ -293,11 +343,11 @@ app.get('/api/partner-cards', authenticateToken(authClient), requireActiveUser, 
       // 이마트: 교원열이 비어있는 카드만
       query += ` AND (교원 IS NULL OR 교원 = '')`;
     } else if (channel === 'hp') {
-      // 홈플러스: 향후 추가 조건 설정 가능
-      // query += ` AND (홈플러스 조건)`;
+      // 홈플러스: 교원열이 비어있는 카드 + 교원값이 "교원"인 카드
+      query += ` AND (교원 IS NULL OR 교원 = '' OR 교원 = '교원')`;
     } else if (channel === 'et') {
-      // 전자랜드: 향후 추가 조건 설정 가능  
-      // query += ` AND (전자랜드 조건)`;
+      // 전자랜드: 교원열이 비어있는 카드 + 교원값이 "더피플"인 카드
+      query += ` AND (교원 IS NULL OR 교원 = '' OR 교원 = '더피플')`;
     }
     
     query += ` ORDER BY 카드, 사용금액`;
@@ -375,10 +425,742 @@ app.get('/api/image/:model_name', async (req, res) => {
   }
 });
 
+// ============= 관리자 API 시작 =============
+
+// multer 설정
+const upload = multer({ 
+  dest: 'uploads/',
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB 제한
+});
+
+// 관리자 권한 체크 미들웨어
+function checkAdminAuth(req, res, next) {
+  // authenticateToken과 requireAdmin을 함께 사용
+  authenticateToken(authClient)(req, res, (err) => {
+    if (err) {
+      console.log('Admin auth failed - no token');
+      return res.status(401).json({ error: '인증이 필요합니다.' });
+    }
+    
+    console.log('Admin auth check - user:', {
+      employee_id: req.user.employee_id,
+      position: req.user.position,
+      is_admin: req.user.is_admin,
+      isAdmin: req.user.isAdmin,
+      username: req.user.username
+    });
+    
+    // 관리자 권한 체크 (is_admin 추가)
+    if (!req.user.is_admin && !req.user.isAdmin && req.user.position !== '관리자' && req.user.employee_id !== 'admin') {
+      console.log('Admin auth failed - not admin');
+      return res.status(403).json({ error: '관리자 권한이 필요합니다.' });
+    }
+    next();
+  });
+}
+
+// 현재 데이터 정보 조회
+app.get('/api/admin/data-info/subscription', checkAdminAuth, async (req, res) => {
+  const { channel } = req.query;
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    
+    // 채널별 테이블과 이름 설정
+    const selectedChannel = channel || 'em';
+    const tableName = channelConfigs[selectedChannel].dataTable;
+    const channelName = channelConfigs[selectedChannel].name;
+    
+    const [count] = await conn.query(`SELECT COUNT(*) as count FROM ${tableName} WHERE channel = ?`, [selectedChannel]);
+    
+    // 업로드 시간 조회 (upload_logs 테이블이 있다면)
+    let uploadTime = null;
+    try {
+      const [lastUpload] = await conn.query(
+        'SELECT MAX(upload_time) as last_upload FROM upload_logs WHERE data_type = ? AND (channel = ? OR channel IS NULL) ORDER BY upload_time DESC LIMIT 1',
+        ['subscription', selectedChannel]
+      );
+      uploadTime = lastUpload?.last_upload;
+    } catch (e) {
+      // 테이블이 없을 수 있음
+      console.log('No upload_logs table');
+    }
+    
+    res.json({ 
+      message: `${channelName}: ${count.count}개 제품`,
+      lastUpload: uploadTime
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+app.get('/api/admin/data-info/images', checkAdminAuth, async (req, res) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const [count] = await conn.query('SELECT COUNT(*) as count FROM model_images');
+    
+    // 업로드 시간 조회
+    let uploadTime = null;
+    try {
+      const [lastUpload] = await conn.query(
+        'SELECT MAX(upload_time) as last_upload FROM upload_logs WHERE data_type = ? ORDER BY upload_time DESC LIMIT 1',
+        ['images']
+      );
+      uploadTime = lastUpload?.last_upload;
+    } catch (e) {
+      console.log('No upload_logs table');
+    }
+    
+    res.json({ 
+      message: `${count.count}개 모델 이미지`,
+      lastUpload: uploadTime
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+app.get('/api/admin/data-info/cards', checkAdminAuth, async (req, res) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const [count] = await conn.query('SELECT COUNT(*) as count FROM partner_cards');
+    
+    // 업로드 시간 조회
+    let uploadTime = null;
+    try {
+      const [lastUpload] = await conn.query(
+        'SELECT MAX(upload_time) as last_upload FROM upload_logs WHERE data_type = ? ORDER BY upload_time DESC LIMIT 1',
+        ['cards']
+      );
+      uploadTime = lastUpload?.last_upload;
+    } catch (e) {
+      console.log('No upload_logs table');
+    }
+    
+    res.json({ 
+      message: `${count.count}개 카드 데이터`,
+      lastUpload: uploadTime
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 구독 데이터 업로드
+app.post('/api/admin/upload/subscription', checkAdminAuth, upload.single('file'), async (req, res) => {
+  const { channel } = req.body;
+  const file = req.file;
+  
+  if (!file) {
+    return res.status(400).json({ error: '파일이 없습니다.' });
+  }
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    
+    // CSV 파일 읽기를 Promise로 변환
+    const parseCSV = () => {
+      return new Promise((resolve, reject) => {
+        const results = [];
+        fs.createReadStream(file.path)
+          .pipe(csv())
+          .on('data', (data) => results.push(data))
+          .on('end', () => resolve(results))
+          .on('error', reject);
+      });
+    };
+    
+    try {
+      const results = await parseCSV();
+      
+      // 테이블 선택 (현재는 모두 products 사용)
+      const tableName = channelConfigs[channel || 'em'].dataTable;
+      
+      console.log(`Uploading ${results.length} rows to ${tableName}`);
+      
+      // channel 컬럼이 없으면 추가
+      try {
+        await conn.query(`ALTER TABLE ${tableName} ADD COLUMN channel VARCHAR(10) DEFAULT 'em'`);
+        console.log('Added channel column to table');
+      } catch (e) {
+        // 이미 컬럼이 있으면 무시
+        console.log('Channel column already exists');
+      }
+      
+      // 기존 데이터 삭제 (해당 채널만)
+      console.log(`Deleting existing data for channel ${channel || 'em'} from ${tableName}...`);
+      await conn.query(`DELETE FROM ${tableName} WHERE channel = ?`, [channel || 'em']);
+      
+      // 새 데이터 삽입 (배치 처리로 성능 개선)
+      console.log(`Inserting ${results.length} rows for channel ${channel || 'em'}...`);
+      const batchSize = 100; // 한 번에 처리할 행 수
+      
+      for (let i = 0; i < results.length; i += batchSize) {
+        const batch = results.slice(i, Math.min(i + batchSize, results.length));
+        
+        // 트랜잭션 시작
+        await conn.beginTransaction();
+        
+        try {
+          for (const row of batch) {
+            // id 컬럼 제거 (자동 생성되도록)
+            delete row.id;
+            
+            // channel 정보 추가
+            row.channel = channel || 'em';
+            
+            // 컬럼명과 값 분리
+            const columns = Object.keys(row);
+            const values = columns.map(column => {
+              const value = row[column];
+              
+              // 활성화 필드 특별 처리 - 빈 값은 0으로
+              if (column === '활성화' && (value === '' || value === null || value === undefined)) {
+                return 0;
+              }
+              
+              // 다른 필드들은 빈 문자열을 NULL로 변환
+              if (value === '' || value === null || value === undefined) {
+                return null;
+              }
+              
+              // 숫자 필드인 경우 숫자로 변환 시도
+              if (!isNaN(value) && value !== '') {
+                return value;
+              }
+              return value;
+            });
+            const placeholders = columns.map(() => '?').join(',');
+            
+            const query = `INSERT INTO ${tableName} (${columns.map(col => `\`${col}\``).join(',')}) VALUES (${placeholders})`;
+            await conn.query(query, values);
+          }
+          
+          await conn.commit();
+          console.log(`Processed ${Math.min(i + batchSize, results.length)} / ${results.length} rows`);
+        } catch (batchErr) {
+          await conn.rollback();
+          throw batchErr;
+        }
+      }
+      
+      // 업로드 로그 저장 (테이블이 없으면 생성)
+      try {
+        await conn.query(`
+          CREATE TABLE IF NOT EXISTS upload_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            data_type VARCHAR(50),
+            channel VARCHAR(20),
+            record_count INT,
+            upload_time DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+        
+        await conn.query(
+          'INSERT INTO upload_logs (data_type, channel, record_count) VALUES (?, ?, ?)',
+          ['subscription', channel || 'em', results.length]
+        );
+      } catch (logErr) {
+        console.log('Failed to save upload log:', logErr);
+      }
+      
+      // 임시 파일 삭제
+      if (fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
+      
+      res.json({ 
+        message: `${results.length}개 제품 데이터가 업로드되었습니다.`,
+        channel: channelConfigs[channel || 'em'].name 
+      });
+    } catch (err) {
+      console.error('Upload error:', err);
+      if (file && fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
+      res.status(500).json({ error: err.message });
+    }
+  } catch (err) {
+    console.error('Connection error:', err);
+    if (file && fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 이미지 업로드 (CSV 방식)
+app.post('/api/admin/upload/images', checkAdminAuth, upload.single('file'), async (req, res) => {
+  const file = req.file;
+  
+  if (!file) {
+    return res.status(400).json({ error: '파일이 없습니다.' });
+  }
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    
+    // CSV 파일 읽기를 Promise로 변환
+    const parseCSV = () => {
+      return new Promise((resolve, reject) => {
+        const results = [];
+        fs.createReadStream(file.path)
+          .pipe(csv())
+          .on('data', (data) => results.push(data))
+          .on('end', () => resolve(results))
+          .on('error', reject);
+      });
+    };
+    
+    try {
+      const results = await parseCSV();
+      
+      console.log(`Processing ${results.length} image records...`);
+      
+      // 기존 데이터 삭제
+      await conn.query('DELETE FROM model_images');
+      
+      let uploadedCount = 0;
+      let currentNo = 1; // no 값을 1부터 시작
+      
+      // 새 데이터 삽입
+      for (const row of results) {
+        // 모델명과 링크 필드만 사용
+        const modelName = row['모델명'];
+        const imageUrl = row['링크'];
+        
+        if (modelName && imageUrl) {
+          // no 필드에 명시적으로 순차적인 값 할당
+          await conn.query(
+            'INSERT INTO model_images (no, model_name, image_url) VALUES (?, ?, ?)',
+            [currentNo, modelName, imageUrl]
+          );
+          currentNo++; // 다음 레코드를 위해 증가
+          uploadedCount++;
+        }
+      }
+      
+      // 업로드 로그 저장
+      try {
+        await conn.query(
+          'INSERT INTO upload_logs (data_type, record_count) VALUES (?, ?)',
+          ['images', uploadedCount]
+        );
+      } catch (logErr) {
+        console.log('Failed to save upload log:', logErr);
+      }
+      
+      // 임시 파일 삭제
+      if (fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
+      
+      res.json({ 
+        message: `${uploadedCount}개 모델 이미지 정보가 업로드되었습니다.` 
+      });
+    } catch (err) {
+      console.error('Upload error:', err);
+      if (file && fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
+      res.status(500).json({ error: err.message });
+    }
+  } catch (err) {
+    console.error('Connection error:', err);
+    if (file && fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 카드 데이터 업로드
+app.post('/api/admin/upload/cards', checkAdminAuth, upload.single('file'), async (req, res) => {
+  const file = req.file;
+  
+  if (!file) {
+    return res.status(400).json({ error: '파일이 없습니다.' });
+  }
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    
+    // CSV 파일 읽기
+    const results = [];
+    fs.createReadStream(file.path)
+      .pipe(csv())
+      .on('data', (data) => results.push(data))
+      .on('end', async () => {
+        try {
+          // 기존 데이터 삭제 (모든 partner_cards 데이터)
+          await conn.query('DELETE FROM partner_cards');
+          
+          // 새 데이터 삽입
+          for (const row of results) {
+            // 컬럼명 매핑 (CSV의 띄어쓰기 있는 컬럼명을 DB 컬럼명으로 변환)
+            const columnMapping = {
+              '카드': '카드',
+              '사용금액': '사용금액',
+              '카드 혜택': '카드혜택',  // 띄어쓰기 제거
+              '혜택': '혜택',
+              '기본 혜택': '기본혜택',  // 띄어쓰기 제거
+              '프로모션 혜택': '프로모션혜택',  // 띄어쓰기 제거
+              '프로모션_개월': '프로모션개월',  // 언더스코어 제거
+              '프로모션 기간': '프로모션기간',  // 띄어쓰기 제거
+              '비고': '비고',
+              '3년': '3년',
+              '3년p': '3년p',
+              '4년': '4년',
+              '4년p': '4년p',
+              '5년': '5년',
+              '5년p': '5년p',
+              '6년': '6년',
+              '6년p': '6년p',
+              '환급금액': '환급금액',
+              '교원': '교원'
+            };
+            
+            // 매핑된 컬럼명과 값 준비
+            const mappedData = {};
+            for (const [csvCol, value] of Object.entries(row)) {
+              const dbCol = columnMapping[csvCol] || csvCol;
+              mappedData[dbCol] = value;
+            }
+            
+            const columns = Object.keys(mappedData);
+            const values = Object.values(mappedData).map(value => {
+              // 빈 문자열을 NULL로 변환
+              if (value === '' || value === null || value === undefined) {
+                return null;
+              }
+              // 숫자 필드인 경우 숫자로 변환 시도
+              if (!isNaN(value) && value !== '') {
+                return value;
+              }
+              return value;
+            });
+            const placeholders = columns.map(() => '?').join(',');
+            
+            const query = `INSERT INTO partner_cards (${columns.map(col => `\`${col}\``).join(',')}) VALUES (${placeholders})`;
+            await conn.query(query, values);
+          }
+          
+          // 임시 파일 삭제
+          fs.unlinkSync(file.path);
+          
+          res.json({ 
+            message: `${results.length}개 카드 데이터가 업로드되었습니다.`
+          });
+        } catch (err) {
+          fs.unlinkSync(file.path);
+          res.status(500).json({ error: err.message });
+        }
+      });
+  } catch (err) {
+    if (file && fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 구독 데이터 그리드 조회 (관리자용)
+app.get('/api/admin/subscriptions/grid', checkAdminAuth, async (req, res) => {
+  const { channel, product_group } = req.query;
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    
+    // 쿼리 생성
+    let query = 'SELECT * FROM subscriptions WHERE 1=1';
+    const params = [];
+    
+    if (channel) {
+      query += ' AND 채널 = ?';
+      params.push(channel);
+    }
+    
+    if (product_group) {
+      query += ' AND 제품군 = ?';
+      params.push(product_group);
+    }
+    
+    query += ' ORDER BY id';
+    
+    const rows = await conn.query(query, params);
+    
+    // 컬럼 정보 추출
+    const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
+    
+    res.json({
+      data: rows,
+      columns: columns,
+      total: rows.length
+    });
+  } catch (err) {
+    console.error('Grid data error:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 구독 데이터 일괄 수정 (관리자용)
+app.post('/api/admin/subscriptions/update', checkAdminAuth, async (req, res) => {
+  const { changes } = req.body;
+  
+  if (!changes || !Array.isArray(changes)) {
+    return res.status(400).json({ error: '변경사항이 없습니다.' });
+  }
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    await conn.beginTransaction();
+    
+    let updated = 0;
+    for (const change of changes) {
+      const { id, column, value } = change;
+      
+      // SQL 인젝션 방지를 위해 컬럼명 검증
+      const allowedColumns = ['제품군', '모델명', '결합유형', '계약기간', '관리유형', 
+                            '방문주기', '선납', '월요금', '정상가격', '프로모션할인', 
+                            '결합할인', '제휴카드', '혜택', '채널'];
+      
+      if (!allowedColumns.includes(column)) {
+        console.warn(`Invalid column: ${column}`);
+        continue;
+      }
+      
+      const query = `UPDATE subscriptions SET \`${column}\` = ? WHERE id = ?`;
+      await conn.query(query, [value || null, id]);
+      updated++;
+    }
+    
+    await conn.commit();
+    res.json({ 
+      message: '데이터가 수정되었습니다.',
+      updated: updated 
+    });
+  } catch (err) {
+    if (conn) await conn.rollback();
+    console.error('Update error:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 구독 혜택 조회 (관리자용)
+app.get('/api/benefits', async (req, res) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query('SELECT id, name, management_type, search_keyword, icon_url, vertical_image_url, horizontal_image_url, video_url, html_url, service_before, service_after, payment_value FROM subscription_benefits ORDER BY id');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 구독 혜택 추가
+app.post('/api/admin/benefits', checkAdminAuth, async (req, res) => {
+  const { 
+    name, 
+    management_type, 
+    search_keyword, 
+    icon_url, 
+    vertical_image_url, 
+    horizontal_image_url, 
+    video_url, 
+    html_url,
+    service_before,
+    service_after,
+    payment_value 
+  } = req.body;
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const result = await conn.query(
+      `INSERT INTO subscription_benefits 
+       (name, management_type, search_keyword, icon_url, vertical_image_url, horizontal_image_url, video_url, html_url, service_before, service_after, payment_value) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, management_type, search_keyword, icon_url, vertical_image_url, horizontal_image_url, video_url, html_url, service_before, service_after, payment_value]
+    );
+    
+    res.json({ 
+      message: '혜택이 추가되었습니다.',
+      id: result.insertId 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 구독 혜택 수정
+app.put('/api/admin/benefits/:id', checkAdminAuth, async (req, res) => {
+  const { id } = req.params;
+  const { 
+    name, 
+    management_type, 
+    search_keyword, 
+    icon_url, 
+    vertical_image_url, 
+    horizontal_image_url, 
+    video_url, 
+    html_url,
+    service_before,
+    service_after,
+    payment_value 
+  } = req.body;
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    await conn.query(
+      `UPDATE subscription_benefits 
+       SET name = ?, management_type = ?, search_keyword = ?, icon_url = ?, 
+           vertical_image_url = ?, horizontal_image_url = ?, video_url = ?, html_url = ?,
+           service_before = ?, service_after = ?, payment_value = ? 
+       WHERE id = ?`,
+      [name, management_type, search_keyword, icon_url, vertical_image_url, horizontal_image_url, video_url, html_url, service_before, service_after, payment_value, id]
+    );
+    
+    res.json({ message: '혜택이 수정되었습니다.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 구독 혜택 삭제
+app.delete('/api/admin/benefits/:id', checkAdminAuth, async (req, res) => {
+  const { id } = req.params;
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    await conn.query('DELETE FROM subscription_benefits WHERE id = ?', [id]);
+    
+    res.json({ message: '혜택이 삭제되었습니다.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 현재 데이터 다운로드
+app.get('/api/admin/download/subscription', checkAdminAuth, async (req, res) => {
+  const { channel } = req.query;
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const selectedChannel = channel || 'em';
+    const tableName = channelConfigs[selectedChannel].dataTable;
+    const rows = await conn.query(`SELECT * FROM ${tableName} WHERE channel = ?`, [selectedChannel]);
+    
+    // CSV 변환
+    const Parser = require('json2csv').Parser;
+    const fields = Object.keys(rows[0] || {});
+    const opts = { fields, withBOM: true };
+    const parser = new Parser(opts);
+    const csv = parser.parse(rows);
+    
+    res.header('Content-Type', 'text/csv; charset=utf-8');
+    res.attachment(`subscription_${channel}_${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+app.get('/api/admin/download/cards', checkAdminAuth, async (req, res) => {
+  const { channel } = req.query;
+  
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query('SELECT * FROM partner_cards');
+    
+    // CSV 변환
+    const Parser = require('json2csv').Parser;
+    const fields = Object.keys(rows[0] || {});
+    const opts = { fields, withBOM: true };
+    const parser = new Parser(opts);
+    const csv = parser.parse(rows);
+    
+    res.header('Content-Type', 'text/csv; charset=utf-8');
+    res.attachment(`cards_${channel}_${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// 이미지 데이터 다운로드
+app.get('/api/admin/download/images', checkAdminAuth, async (req, res) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query('SELECT model_name as 모델명, image_url as 링크 FROM model_images ORDER BY model_name');
+    
+    // CSV 변환
+    const Parser = require('json2csv').Parser;
+    const fields = ['모델명', '링크'];
+    const opts = { fields, withBOM: true };
+    const parser = new Parser(opts);
+    const csv = parser.parse(rows);
+    
+    res.header('Content-Type', 'text/csv; charset=utf-8');
+    res.attachment(`모델별이미지_${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// ============= 관리자 API 끝 =============
+
 // 메인 페이지
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// 이미지 정적 파일 서빙
+app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
 
 app.listen(PORT, () => {
   console.log(`서버가 http://localhost:${PORT}에서 실행 중입니다.`);

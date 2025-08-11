@@ -35,11 +35,32 @@ class SubscriptionCalculator {
         }
     }
     
+    toggleTotalCostDisplay(show) {
+        const totalCostSections = document.querySelectorAll('.total-cost-section');
+        totalCostSections.forEach(section => {
+            if (show) {
+                section.style.maxHeight = '500px';
+            } else {
+                section.style.maxHeight = '0';
+            }
+        });
+        
+        // 총금액 합산 표시도 체크박스에 따라 제어
+        const totalCostSummary = document.getElementById('totalCostSummary');
+        if (totalCostSummary) {
+            totalCostSummary.style.display = show ? 'block' : 'none';
+        }
+    }
+    
     async loadCategories() {
         try {
-            const response = await fetch('/api/categories');
-            this.categories = await response.json();
-            console.log('카테고리 로드 완료:', this.categories.length, '개');
+            const response = await authClient.apiRequest('/api/categories');
+            if (response.ok) {
+                this.categories = await response.json();
+                console.log('카테고리 로드 완료:', this.categories.length, '개');
+            } else {
+                console.error('카테고리 로딩 실패:', response.status);
+            }
         } catch (error) {
             console.error('카테고리 로딩 실패:', error);
         }
@@ -47,6 +68,14 @@ class SubscriptionCalculator {
     
     setupEventListeners() {
         console.log('EventListener 설정 시작');
+        
+        // 총혜택 보기 체크박스
+        const showTotalCostCheckbox = document.getElementById('showTotalCost');
+        if (showTotalCostCheckbox) {
+            showTotalCostCheckbox.addEventListener('change', (e) => {
+                this.toggleTotalCostDisplay(e.target.checked);
+            });
+        }
         
         // 제품 추가 버튼
         const addProductCard = document.getElementById('addProductCard');
@@ -72,6 +101,10 @@ class SubscriptionCalculator {
     }
     
     async renderProductsGrid() {
+        // 체크박스 상태 저장
+        const showTotalCostCheckbox = document.getElementById('showTotalCost');
+        const wasChecked = showTotalCostCheckbox ? showTotalCostCheckbox.checked : false;
+        
         const productsGrid = document.getElementById('productsGrid');
         const welcomeMessage = document.getElementById('welcomeMessage');
         const addProductCard = document.getElementById('addProductCard');
@@ -112,6 +145,12 @@ class SubscriptionCalculator {
             console.log('제품 추가 버튼 표시됨');
         } else {
             console.error('제품 추가 버튼을 찾을 수 없음');
+        }
+        
+        // 체크박스 상태 복원 및 적용
+        if (showTotalCostCheckbox && wasChecked) {
+            showTotalCostCheckbox.checked = true;
+            this.toggleTotalCostDisplay(true);
         }
     }
     
@@ -164,6 +203,7 @@ class SubscriptionCalculator {
                     <div class="product-title-row">
                         <div class="product-title">${product['모델명'] || '제품명 없음'}</div>
                     </div>
+                    ${product['기준가'] ? `<div style="font-size: 12px; color: #666; margin: 2px 0; text-align: center; font-weight: bold;">기준가: ${parseInt(product['기준가']).toLocaleString()}원</div>` : ''}
                     <div class="product-specs">
                         ${product['결합유형'] || '-'} | ${product['계약기간'] || '-'}<br>
                         ${product['관리유형'] || '관리없음'} | ${product['방문주기'] || '방문없음'}${prepaymentDisplay}
@@ -177,7 +217,7 @@ class SubscriptionCalculator {
             ${!partnerCard ? `<div class="product-actions">
                 <button class="partner-card-btn" onclick="calculator.openPartnerCardModal(${index})">제휴카드 연동</button>
             </div>` : ''}
-            <div class="product-price">
+            <div class="product-price" style="display: block;">
                 <div class="price-breakdown">
                     <div class="price-item monthly-fee">
                         <span class="price-label">월 구독료</span>
@@ -185,6 +225,7 @@ class SubscriptionCalculator {
                     </div>
                     ${partnerCard ? this.generatePeriodBasedPricing(product, monthlyFee) : ''}
                 </div>
+                ${this.generateTotalCostSection(product, monthlyFee, partnerCard)}
             </div>
         `;
 
@@ -228,6 +269,92 @@ class SubscriptionCalculator {
         }
         
         return card;
+    }
+    
+    generateTotalCostSection(product, monthlyFee, partnerCard) {
+        const contractPeriod = product['계약기간'];
+        if (!contractPeriod) return '';
+        
+        // 계약기간을 월 단위로 변환
+        const contractMonths = parseInt(contractPeriod.replace('년', '')) * 12;
+        
+        // 총 월구독료 계산
+        const totalMonthlyFee = monthlyFee * contractMonths;
+        
+        // 카드 혜택 계산
+        let totalCardBenefit = 0;
+        let promotionBenefit = 0;
+        let basicBenefit = 0;
+        
+        if (partnerCard) {
+            const periodInfo = this.calculatePeriodBasedDiscount(contractPeriod, partnerCard);
+            
+            // 프로모션 기간 혜택
+            if (periodInfo.promotionPeriod > 0) {
+                promotionBenefit = Math.min(partnerCard.promotionDiscount, monthlyFee) * periodInfo.promotionPeriod;
+            }
+            
+            // 기본 혜택 기간
+            if (periodInfo.basicPeriod > 0) {
+                basicBenefit = Math.min(partnerCard.basicDiscount, monthlyFee) * periodInfo.basicPeriod;
+            }
+            
+            totalCardBenefit = promotionBenefit + basicBenefit;
+        }
+        
+        // 활성화(프로모션 할인) 혜택 계산
+        const activationDiscount = this.parsePrice(product['활성화']) || 0;
+        const promotionMonths = parseInt(product['프로모션할인종료월'] || '0');
+        const totalActivationBenefit = activationDiscount * promotionMonths;
+        
+        // 결합할인 혜택 계산
+        const combinationDiscount = this.parsePrice(product['할인금액']) || 0;
+        const totalCombinationBenefit = combinationDiscount * contractMonths;
+        
+        // 총 혜택금액
+        const totalBenefit = totalCardBenefit + totalActivationBenefit + totalCombinationBenefit;
+        
+        // 실제 지불 총액
+        const actualTotalCost = totalMonthlyFee - totalBenefit;
+        
+        return `
+            <div class="total-cost-section" style="border-top: 2px solid #e0e0e0; margin-top: 15px; padding-top: 15px; clear: both; width: 100%; max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">
+                <div style="background: #f8f8fc; padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 10px; text-align: center;">
+                        계약기간(${contractPeriod}) 총 비용
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-size: 12px; color: #666;">총 월구독료:</span>
+                        <span style="font-size: 12px; font-weight: bold; color: #333;">${this.formatPrice(totalMonthlyFee)}</span>
+                    </div>
+                    ${totalCardBenefit > 0 ? `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-size: 12px; color: #666;">총 카드혜택:</span>
+                        <span style="font-size: 12px; font-weight: bold; color: #ff4444;">-${this.formatPrice(totalCardBenefit)}</span>
+                    </div>` : ''}
+                    ${totalActivationBenefit > 0 ? `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-size: 12px; color: #666;">프로모션할인:</span>
+                        <span style="font-size: 12px; font-weight: bold; color: #ff4444;">-${this.formatPrice(totalActivationBenefit)}</span>
+                    </div>` : ''}
+                    ${totalCombinationBenefit > 0 ? `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-size: 12px; color: #666;">결합할인:</span>
+                        <span style="font-size: 12px; font-weight: bold; color: #ff4444;">-${this.formatPrice(totalCombinationBenefit)}</span>
+                    </div>` : ''}
+                    <div style="border-top: 1px solid #ddd; margin-top: 8px; padding-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                            <span style="font-size: 12px; color: #666;">총 혜택금액:</span>
+                            <span style="font-size: 12px; font-weight: bold; color: #ff4444;">-${this.formatPrice(totalBenefit)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-size: 13px; font-weight: bold; color: #333;">실 지불총액:</span>
+                            <span style="font-size: 14px; font-weight: bold; color: #2196f3;">${this.formatPrice(actualTotalCost)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
     
     generatePeriodBasedPricing(product, monthlyFee) {
@@ -350,8 +477,8 @@ class SubscriptionCalculator {
             console.log('혜택구분자:', benefitCode);
 
             // 구독 혜택 정보 조회
-            const response = await fetch('/api/subscription-benefits');
-            const benefits = await response.json();
+            const response = await authClient.apiRequest('/api/subscription-benefits');
+            const benefits = await response.ok ? await response.json() : [];
             
             // 혜택구분자와 검색용 필드 매칭
             const matchedBenefit = benefits.find(benefit => benefit.search_keyword === benefitCode);
@@ -402,8 +529,8 @@ class SubscriptionCalculator {
         modalHeader.textContent = hasPartnerCard ? '제휴카드 변경 - 카드사 선택' : '제휴카드 선택 - 카드사 선택';
         
         try {
-            const response = await fetch('/api/partner-cards');
-            const cards = await response.json();
+            const response = await authClient.apiRequest('/api/partner-cards');
+            const cards = await response.ok ? await response.json() : [];
             
             // 카드사별로 그룹화
             const cardGroups = {};
@@ -496,8 +623,8 @@ class SubscriptionCalculator {
         modalHeader.textContent = `${actionText} - ${this.selectedCard} 사용금액 선택`;
         
         try {
-            const response = await fetch('/api/partner-cards');
-            const cards = await response.json();
+            const response = await authClient.apiRequest('/api/partner-cards');
+            const cards = await response.ok ? await response.json() : [];
             
             // 선택된 카드의 사용금액 옵션들
             const cardOptions = cards.filter(card => card.카드 === this.selectedCard);
@@ -657,17 +784,22 @@ class SubscriptionCalculator {
         
         if (normalPriceEl) normalPriceEl.textContent = this.formatPrice(normalPrice);
         if (promotionPriceEl) promotionPriceEl.textContent = this.formatPrice(promotionDiscount + partnerCardDiscount);
-        if (finalPriceEl) finalPriceEl.textContent = this.formatPrice(total);
+        if (finalPriceEl) {
+            finalPriceEl.textContent = this.formatPrice(total);
+            
+            // 총금액 합산 정보 추가
+            this.updateTotalCostSummary();
+        }
         
         // 추가혜택 세부사항 업데이트
         if (promotionDiscountDetailEl) {
-            promotionDiscountDetailEl.textContent = `• 프로모션할인: ${this.formatPrice(promotionDiscount)}`;
+            promotionDiscountDetailEl.innerHTML = `<span>• 프로모션할인</span><span>${this.formatPrice(promotionDiscount)}</span>`;
         }
         if (combinationDiscountDetailEl) {
-            combinationDiscountDetailEl.textContent = `• 결합할인: ${this.formatPrice(combinationDiscount)}`;
+            combinationDiscountDetailEl.innerHTML = `<span>• 결합할인</span><span>${this.formatPrice(combinationDiscount)}</span>`;
         }
         if (partnerCardDetailEl) {
-            partnerCardDetailEl.textContent = `• 제휴카드: ${this.formatPrice(partnerCardDiscount)}`;
+            partnerCardDetailEl.innerHTML = `<span>• 제휴카드</span><span>${this.formatPrice(partnerCardDiscount)}</span>`;
         }
         
         // 선납금액 계산 및 표시
@@ -680,6 +812,93 @@ class SubscriptionCalculator {
             제휴카드할인: partnerCardDiscount,
             총할인: totalDiscount
         });
+    }
+    
+    updateTotalCostSummary() {
+        // 모든 제품의 계약기간 총 비용 계산
+        let totalContractCost = 0;
+        let totalBenefits = 0;
+        let actualTotalPayment = 0;
+        
+        this.selectedProducts.forEach(product => {
+            const monthlyFee = this.parsePrice(product['월요금']);
+            const contractPeriod = product['계약기간'];
+            if (!contractPeriod) return;
+            
+            const contractMonths = parseInt(contractPeriod.replace('년', '')) * 12;
+            const totalMonthlyFee = monthlyFee * contractMonths;
+            
+            // 카드 혜택 계산
+            let totalCardBenefit = 0;
+            if (product.partnerCard) {
+                const periodInfo = this.calculatePeriodBasedDiscount(contractPeriod, product.partnerCard);
+                if (periodInfo.promotionPeriod > 0) {
+                    totalCardBenefit += Math.min(product.partnerCard.promotionDiscount, monthlyFee) * periodInfo.promotionPeriod;
+                }
+                if (periodInfo.basicPeriod > 0) {
+                    totalCardBenefit += Math.min(product.partnerCard.basicDiscount, monthlyFee) * periodInfo.basicPeriod;
+                }
+            }
+            
+            // 활성화 혜택
+            const activationDiscount = this.parsePrice(product['활성화']) || 0;
+            const promotionMonths = parseInt(product['프로모션할인종료월'] || '0');
+            const totalActivationBenefit = activationDiscount * promotionMonths;
+            
+            // 결합할인 혜택
+            const combinationDiscount = this.parsePrice(product['할인금액']) || 0;
+            const totalCombinationBenefit = combinationDiscount * contractMonths;
+            
+            const productTotalBenefit = totalCardBenefit + totalActivationBenefit + totalCombinationBenefit;
+            const productActualCost = totalMonthlyFee - productTotalBenefit;
+            
+            totalContractCost += totalMonthlyFee;
+            totalBenefits += productTotalBenefit;
+            actualTotalPayment += productActualCost;
+        });
+        
+        // 총금액 요약 섹션 업데이트 또는 생성
+        let summaryEl = document.getElementById('totalCostSummary');
+        const showTotalCostCheckbox = document.getElementById('showTotalCost');
+        const shouldShow = showTotalCostCheckbox ? showTotalCostCheckbox.checked : false;
+        
+        if (!summaryEl) {
+            summaryEl = document.createElement('div');
+            summaryEl.id = 'totalCostSummary';
+            summaryEl.style.cssText = `
+                background: #f8f8fc;
+                padding: 12px;
+                margin-top: 15px;
+                border-radius: 8px;
+                font-size: 12px;
+                border: 1px solid #e0e0e0;
+            `;
+            const finalTotal = document.querySelector('.final-total');
+            if (finalTotal) {
+                finalTotal.appendChild(summaryEl);
+            }
+        }
+        
+        if (this.selectedProducts.length > 0 && actualTotalPayment > 0) {
+            summaryEl.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 8px; color: #333;">전체 계약기간 총 비용</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="color: #666;">정가 합계:</span>
+                    <span style="color: #333;">${this.formatPrice(totalContractCost)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="color: #666;">총 혜택:</span>
+                    <span style="color: #333;">-${this.formatPrice(totalBenefits)}</span>
+                </div>
+                <div style="border-top: 1px solid #ddd; margin-top: 6px; padding-top: 6px; display: flex; justify-content: space-between;">
+                    <span style="font-weight: bold; color: #333;">실 지불총액:</span>
+                    <span style="font-weight: bold; color: #333; font-size: 14px;">${this.formatPrice(actualTotalPayment)}</span>
+                </div>
+            `;
+            summaryEl.style.display = shouldShow ? 'block' : 'none';
+        } else {
+            summaryEl.style.display = 'none';
+        }
     }
     
     parsePrice(priceStr) {
@@ -876,7 +1095,7 @@ class SubscriptionCalculator {
                 }
             });
             
-            const response = await fetch(`/api/products/find-exact?${queryParams}`);
+            const response = await authClient.apiRequest(`/api/products/find-exact?${queryParams}`);
             if (!response.ok) {
                 console.error(`API error: ${response.status} ${response.statusText}`);
                 return null; // API 에러 시 null 반환
@@ -1039,7 +1258,8 @@ class SubscriptionCalculator {
             prepaymentDetails.forEach(detail => {
                 const detailDiv = document.createElement('div');
                 detailDiv.className = 'prepayment-detail-item';
-                detailDiv.textContent = `• ${detail.modelName}: ${detail.amount} (${detail.option})`;
+                detailDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center;';
+                detailDiv.innerHTML = `<span style="text-align: left;">• ${detail.modelName}</span><span style="text-align: right;">${detail.amount}</span>`;
                 
                 // 모델명 길이에 따른 폰트 크기 조정
                 const textLength = detail.modelName.length;
@@ -1137,8 +1357,8 @@ const subscriptionBenefits = {
 
     async openBenefitsModal() {
         try {
-            const response = await fetch('/api/subscription-benefits');
-            const benefits = await response.json();
+            const response = await authClient.apiRequest('/api/subscription-benefits');
+            const benefits = await response.ok ? await response.json() : [];
             
             this.renderBenefitsGrid(benefits);
             

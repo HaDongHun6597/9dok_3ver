@@ -7,7 +7,18 @@
       "Bash(npm start)",
       "Bash(npm install:*)",
       "Bash(node:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(npm restart)",
+      "Bash(ping:*)",
+      "WebFetch(domain:auth.lgemart.com)",
+      "Bash(curl:*)",
+      "Bash(tskill:*)",
+      "Bash(git add:*)",
+      "Bash(git rm:*)",
+      "Bash(git push:*)",
+      "Bash(cmd //c:*)",
+      "Bash(mysql:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

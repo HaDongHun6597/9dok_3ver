@@ -14,8 +14,8 @@
         <header class="header">
             <div class="header-content">
                 <h1>구독 간편 조회 <span class="channel-version">(홈플러스) ver3</span></h1>
-                <a href="/" class="back-to-main" style="position: absolute; right: 250px; top: 50%; transform: translateY(-50%); text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.background='#f5f5f5'; this.style.color='#333';" onmouseout="this.style.background='white'; this.style.color='#666';">
-                    <span style="font-size: 18px;">←</span> 채널 선택
+                <a href="/" class="back-to-main" style="position: fixed; right: 220px; top: 25px; text-decoration: none; color: #666; font-size: 13px; display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border-radius: 6px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #ddd; height: 36px; box-sizing: border-box;" onmouseover="this.style.background='#f5f5f5'; this.style.color='#333';" onmouseout="this.style.background='white'; this.style.color='#666';">
+                    <span style="font-size: 16px;">←</span> 채널 선택
                 </a>
             </div>
         </header>
@@ -25,6 +25,10 @@
             <aside class="calculator-sidebar">
                 <div class="calculator-header">
                     <h2>가전구독 혜택</h2>
+                    <label style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; font-size: 12px; color: #666; cursor: pointer;">
+                        <input type="checkbox" id="showTotalCost" style="margin-right: 5px; cursor: pointer;">
+                        총혜택 보기
+                    </label>
                 </div>
                 
                 <!-- 구독 타입별 혜택 -->

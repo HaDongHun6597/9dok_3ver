@@ -177,6 +177,17 @@ class ProductSelectionModal {
     
     async getOptionsForStep(field) {
         try {
+            // 첫 번째 단계(제품군)인 경우 categories API 사용
+            if (this.currentStep === 1 && field === '제품군') {
+                const response = await authClient.apiRequest('/api/categories');
+                if (response.ok) {
+                    return await response.json();
+                } else {
+                    console.error('카테고리 API 응답 오류:', response.status);
+                    return [];
+                }
+            }
+            
             // 현재 단계보다 이전 단계의 선택사항만을 기반으로 필터링된 옵션을 가져옴
             const params = new URLSearchParams();
             
@@ -193,8 +204,13 @@ class ProductSelectionModal {
             
             console.log(`${field} 옵션 로딩 - 적용된 필터:`, Object.fromEntries(params));
             
-            const response = await fetch(`/api/product-options/${field}?${params}`);
-            return await response.json();
+            const response = await authClient.apiRequest(`/api/product-options/${field}?${params}`);
+            if (response.ok) {
+                return await response.json();
+            } else {
+                console.error('API 응답 오류:', response.status);
+                return [];
+            }
         } catch (error) {
             console.error('옵션 로딩 실패:', error);
             return [];
@@ -208,15 +224,29 @@ class ProductSelectionModal {
         
         optionsGrid.innerHTML = '';
         
-        let uniqueOptions = [...new Set(options.filter(option => option && option.trim()))];
+        // options가 배열이 아닌 경우 빈 배열로 처리
+        if (!Array.isArray(options)) {
+            console.error('options가 배열이 아닙니다:', options);
+            options = [];
+        }
         
-        // '계약기간' 필드일 경우 내림차순으로 정렬
-        if (field === '계약기간') {
-            uniqueOptions.sort((a, b) => {
-                const numA = parseInt(a.replace('년', ''));
-                const numB = parseInt(b.replace('년', ''));
-                return numB - numA; // 내림차순 정렬
-            });
+        // 모델명인 경우 특별 처리
+        let uniqueOptions;
+        if (field === '모델명' && options.length > 0 && typeof options[0] === 'object') {
+            // 활성화 정보가 포함된 객체 배열
+            uniqueOptions = options;
+        } else {
+            // 일반 문자열 배열
+            uniqueOptions = [...new Set(options.filter(option => option && option.toString().trim()))];
+        
+            // '계약기간' 필드일 경우 내림차순으로 정렬
+            if (field === '계약기간') {
+                uniqueOptions.sort((a, b) => {
+                    const numA = parseInt(a.replace('년', ''));
+                    const numB = parseInt(b.replace('년', ''));
+                    return numB - numA; // 내림차순 정렬
+                });
+            }
         }
         this.currentOptions = uniqueOptions; // 필터링을 위해 저장
         this.currentField = field;
@@ -240,15 +270,46 @@ class ProductSelectionModal {
         options.forEach(option => {
             const optionCard = document.createElement('div');
             optionCard.className = 'option-card';
-            optionCard.dataset.value = option;
+            
+            // 모델명인 경우 객체에서 값 추출
+            let displayText, optionValue;
+            if (field === '모델명' && typeof option === 'object') {
+                displayText = option.model;
+                optionValue = option.model;
+                
+                // 활성화가 있는 경우 표시 (빈 문자열이나 0, 1은 제외)
+                const activationValue = parseInt(option.activation) || 0;
+                if (activationValue > 1) {
+                    const activationBadge = document.createElement('div');
+                    activationBadge.style.cssText = `
+                        position: absolute;
+                        top: 5px;
+                        right: 5px;
+                        background: #2196f3;
+                        color: white;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 11px;
+                        font-weight: bold;
+                    `;
+                    activationBadge.textContent = `${activationValue.toLocaleString()}원 활성화`;
+                    optionCard.appendChild(activationBadge);
+                    optionCard.style.position = 'relative';
+                }
+            } else {
+                displayText = option;
+                optionValue = option;
+            }
+            
+            optionCard.dataset.value = optionValue;
             
             const optionTitle = document.createElement('div');
             optionTitle.className = 'option-title';
-            optionTitle.textContent = option;
+            optionTitle.textContent = displayText;
             optionCard.appendChild(optionTitle);
             
             // 텍스트 길이에 따른 간단한 폰트 크기 조정
-            const textLength = option.length;
+            const textLength = displayText.length;
             let fontSize;
             
             if (textLength <= 10) {
@@ -267,7 +328,7 @@ class ProductSelectionModal {
             
             optionTitle.style.fontSize = fontSize;
             
-            optionCard.addEventListener('click', () => this.selectOptionAndNext(option, field, optionCard));
+            optionCard.addEventListener('click', () => this.selectOptionAndNext(optionValue, field, optionCard));
             
             optionsGrid.appendChild(optionCard);
         });
@@ -276,9 +337,14 @@ class ProductSelectionModal {
     filterOptions(searchTerm) {
         if (!this.currentOptions) return;
         
-        const filteredOptions = this.currentOptions.filter(option =>
-            option.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        const filteredOptions = this.currentOptions.filter(option => {
+            // 모델명 객체인 경우
+            if (this.currentField === '모델명' && typeof option === 'object') {
+                return option.model.toLowerCase().includes(searchTerm.toLowerCase());
+            }
+            // 일반 문자열인 경우
+            return option.toLowerCase().includes(searchTerm.toLowerCase());
+        });
         
         this.displayOptions(filteredOptions, this.currentField);
         this.updateSearchResultCount(filteredOptions.length, this.currentOptions.length);
@@ -421,8 +487,8 @@ class ProductSelectionModal {
                 }
             });
             
-            const response = await fetch(`/api/products/find-exact?${params}`);
-            const products = await response.json();
+            const response = await authClient.apiRequest(`/api/products/find-exact?${params}`);
+            const products = response.ok ? await response.json() : [];
             
             if (products.length > 0) {
                 const product = products[0]; // 첫 번째 매칭 제품 선택

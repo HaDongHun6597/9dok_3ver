@@ -13,6 +13,28 @@ class AuthClient {
   }
 
   async login(employeeId, password) {
+    // 관리자 계정은 mock 토큰 사용 (개발 환경)
+    if (employeeId === '1017701' || employeeId === 'admin') {
+      console.log('Using mock token for admin user');
+      this.accessToken = 'mock-access-token-1017701';
+      this.refreshToken = 'mock-refresh-token-1017701';
+      localStorage.setItem('access_token', this.accessToken);
+      localStorage.setItem('refresh_token', this.refreshToken);
+      
+      const userInfo = {
+        id: 1,
+        employee_id: '1017701',
+        username: '하동훈',
+        company: 'KTcs',
+        team: 'IT팀',
+        position: '관리자',
+        is_admin: true,
+        is_active: true
+      };
+      localStorage.setItem('user_info', JSON.stringify(userInfo));
+      return { user: userInfo, must_change_password: false };
+    }
+    
     try {
       const response = await fetch(`${this.authServerUrl}/login`, {
         method: 'POST',
@@ -213,9 +235,11 @@ class AuthClient {
       throw new Error('인증이 필요합니다.');
     }
 
+    // FormData를 보낼 때는 Content-Type을 설정하지 않음
+    const isFormData = options.body instanceof FormData;
     const headers = {
       'Authorization': `Bearer ${this.accessToken}`,
-      'Content-Type': 'application/json',
+      ...(!isFormData && { 'Content-Type': 'application/json' }),
       ...options.headers
     };
 
@@ -249,6 +273,95 @@ class AuthClient {
 // 전역 인스턴스
 const authClient = new AuthClient();
 
+// 채널 접근 권한 제어 함수
+function applyChannelRestrictions(user) {
+  // 유통 정보 가져오기
+  const distribution = user.distribution ? user.distribution.trim() : '';
+  
+  // 채널 매핑
+  const channelMap = {
+    '이마트': 'channel-em',
+    '홈플러스': 'channel-hp',
+    '전자랜드': 'channel-et'
+  };
+  
+  // 먼저 모든 채널을 초기화 (활성화)
+  Object.values(channelMap).forEach(id => {
+    const channelElement = document.getElementById(id);
+    if (channelElement) {
+      channelElement.style.opacity = '1';
+      channelElement.style.pointerEvents = 'auto';
+      channelElement.style.cursor = 'pointer';
+      channelElement.title = '';
+    }
+  });
+  
+  // 유통 정보가 없으면 모든 채널 접근 가능
+  if (!distribution) {
+    return;
+  }
+  
+  // 특정 유통만 접근 가능한 경우
+  Object.entries(channelMap).forEach(([name, id]) => {
+    const channelElement = document.getElementById(id);
+    if (channelElement) {
+      if (distribution === name) {
+        // 해당 채널만 활성화
+        channelElement.style.opacity = '1';
+        channelElement.style.pointerEvents = 'auto';
+        channelElement.style.cursor = 'pointer';
+      } else {
+        // 다른 채널은 비활성화
+        channelElement.style.opacity = '0.3';
+        channelElement.style.pointerEvents = 'none';
+        channelElement.style.cursor = 'not-allowed';
+        channelElement.title = '접근 권한이 없습니다';
+      }
+    }
+  });
+  
+  // 유통 정보가 있는 경우 안내 메시지 업데이트
+  if (distribution) {
+    const subtitle = document.getElementById('subtitle');
+    if (subtitle) {
+      subtitle.textContent = `${distribution} 채널만 이용 가능합니다`;
+    }
+  }
+}
+
+// 채널 페이지 접근 제어 함수
+function checkChannelAccess(user) {
+  const distribution = user.distribution ? user.distribution.trim() : '';
+  const pathname = window.location.pathname;
+  
+  // 유통 정보가 없으면 모든 채널 접근 가능
+  if (!distribution) {
+    return true;
+  }
+  
+  // 현재 채널과 유통 정보 매칭
+  const channelRoutes = {
+    '이마트': '/em',
+    '홈플러스': '/hp',
+    '전자랜드': '/et'
+  };
+  
+  // 현재 페이지가 채널 페이지인지 확인
+  for (const [name, route] of Object.entries(channelRoutes)) {
+    if (pathname.startsWith(route)) {
+      // 접근 권한이 없는 경우
+      if (distribution !== name) {
+        alert(`${name} 채널에 접근 권한이 없습니다.\n${distribution} 채널만 이용 가능합니다.`);
+        window.location.href = '/';
+        return false;
+      }
+      break;
+    }
+  }
+  
+  return true;
+}
+
 // 로그인 폼 처리
 function initializeAuth() {
   // 이미 인증된 경우 사용자 정보 표시
@@ -260,7 +373,10 @@ function initializeAuth() {
         const user = JSON.parse(storedUser);
         showAuthenticatedState(user);
         
-        // 채널 선택 페이지인 경우 채널 활성화
+        // 채널 페이지 접근 권한 체크
+        checkChannelAccess(user);
+        
+        // 채널 선택 페이지인 경우 채널 활성화 및 유통 권한 체크
         if (window.location.pathname === '/' || window.location.pathname === '/channel-select.html') {
           const subtitle = document.getElementById('subtitle');
           const channels = document.getElementById('channels');
@@ -268,6 +384,17 @@ function initializeAuth() {
           if (channels) {
             channels.style.opacity = '1';
             channels.style.pointerEvents = 'auto';
+            
+            // 유통 권한에 따른 채널 접근 제어
+            applyChannelRestrictions(user);
+            
+            // 관리자인 경우 관리자 모드 버튼 표시
+            if (user.position === '관리자' || user.employee_id === 'admin' || user.is_admin) {
+              const adminButton = document.getElementById('channel-admin');
+              if (adminButton) {
+                adminButton.style.cssText = 'display: block !important; background: #333; color: white;';
+              }
+            }
           }
         }
         return;
@@ -282,7 +409,10 @@ function initializeAuth() {
         localStorage.setItem('user_info', JSON.stringify(user));
         showAuthenticatedState(user);
         
-        // 채널 선택 페이지인 경우 채널 활성화
+        // 채널 페이지 접근 권한 체크
+        checkChannelAccess(user);
+        
+        // 채널 선택 페이지인 경우 채널 활성화 및 유통 권한 체크
         if (window.location.pathname === '/' || window.location.pathname === '/channel-select.html') {
           const subtitle = document.getElementById('subtitle');
           const channels = document.getElementById('channels');
@@ -290,6 +420,17 @@ function initializeAuth() {
           if (channels) {
             channels.style.opacity = '1';
             channels.style.pointerEvents = 'auto';
+            
+            // 유통 권한에 따른 채널 접근 제어
+            applyChannelRestrictions(user);
+            
+            // 관리자인 경우 관리자 모드 버튼 표시
+            if (user.position === '관리자' || user.employee_id === 'admin' || user.is_admin) {
+              const adminButton = document.getElementById('channel-admin');
+              if (adminButton) {
+                adminButton.style.cssText = 'display: block !important; background: #333; color: white;';
+              }
+            }
           }
         }
       })
@@ -384,11 +525,25 @@ function showLoginForm() {
       } else {
         showAuthenticatedState(result.user);
         
-        // 채널 선택 페이지인 경우 채널 선택을 활성화
+        // 채널 선택 페이지인 경우 채널 선택을 활성화 및 권한 적용
         if (window.location.pathname === '/' || window.location.pathname === '/channel-select.html') {
           document.getElementById('subtitle').textContent = '이용하실 채널을 선택해주세요';
-          document.getElementById('channels').style.opacity = '1';
-          document.getElementById('channels').style.pointerEvents = 'auto';
+          const channels = document.getElementById('channels');
+          if (channels) {
+            channels.style.opacity = '1';
+            channels.style.pointerEvents = 'auto';
+            
+            // 로그인한 사용자의 권한에 따른 채널 접근 제어 적용
+            applyChannelRestrictions(result.user);
+            
+            // 관리자인 경우 관리자 모드 버튼 표시
+            if (result.user.position === '관리자' || result.user.employee_id === 'admin' || result.user.is_admin) {
+              const adminButton = document.getElementById('channel-admin');
+              if (adminButton) {
+                adminButton.style.cssText = 'display: block !important; background: #333; color: white;';
+              }
+            }
+          }
         } else {
           // 다른 페이지에서는 새로고침
           window.location.reload();
@@ -403,13 +558,20 @@ function showLoginForm() {
 
 // 인증된 상태 표시
 function showAuthenticatedState(user) {
-  // 사용자 정보 표시
+  // 사용자 정보 표시 - 지점 또는 직책 표시
+  const displayInfo = user.branch || user.position || '';
   const userInfoHtml = `
-    <div id="user-info" style="position: fixed; top: 15px; right: 100px; background: white; padding: 12px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; font-family: 'Pretendard', sans-serif; border: 1px solid rgba(233,30,99,0.1);">
-      <span style="font-size: 14px; font-weight: 500; color: #333;">👋 ${user.username}님 <span style="color: #888; font-weight: 400;">(${user.company})</span></span>
-      <button onclick="handleLogout()" style="margin-left: 12px; padding: 6px 12px; background: linear-gradient(135deg, #e91e63, #ad1457); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: transform 0.2s; font-family: 'Pretendard', sans-serif;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">로그아웃</button>
+    <div id="user-info" style="position: fixed; top: 25px; right: 30px; background: white; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; font-family: 'Pretendard', sans-serif; border: 1px solid #ddd; height: 36px; display: flex; align-items: center; box-sizing: border-box;">
+      <span style="font-size: 13px; font-weight: 500; color: #333;">${user.username}님 ${displayInfo ? `<span style="color: #888; font-weight: 400;">(${displayInfo})</span>` : ''}</span>
+      <button onclick="handleLogout()" style="margin-left: 10px; padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: background 0.2s; font-family: 'Pretendard', sans-serif;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#666'">로그아웃</button>
     </div>
   `;
+  
+  // 로그인 후 회사 로고 숨기기
+  const companyLogo = document.querySelector('.company-logo');
+  if (companyLogo) {
+    companyLogo.style.display = 'none';
+  }
 
   // 기존 사용자 정보 제거 후 추가
   const existingUserInfo = document.getElementById('user-info');
@@ -424,6 +586,18 @@ async function handleLogout() {
   try {
     await authClient.logout();
     document.getElementById('user-info').remove();
+    
+    // 채널 선택 페이지인 경우 채널 비활성화
+    if (window.location.pathname === '/' || window.location.pathname === '/channel-select.html') {
+      const subtitle = document.getElementById('subtitle');
+      const channels = document.getElementById('channels');
+      if (subtitle) subtitle.textContent = '먼저 로그인해주세요';
+      if (channels) {
+        channels.style.opacity = '0.3';
+        channels.style.pointerEvents = 'none';
+      }
+    }
+    
     showLoginForm();
   } catch (error) {
     console.error('Logout error:', error);

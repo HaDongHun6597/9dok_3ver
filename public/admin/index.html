@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지 - 구독 간편조회</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        @font-face {
+            font-family: 'Dalmoori';
+            src: url('/fonts/dalmoori.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .admin-header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
+            position: relative;
+        }
+
+        .admin-header h1 {
+            font-family: 'Dalmoori', sans-serif;
+            font-size: 32px;
+            color: rgba(0, 0, 0, 0.8);
+            margin-bottom: 10px;
+        }
+
+        .admin-header p {
+            font-family: 'Pretendard', sans-serif;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            background: #f8f8fc;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab-button:hover {
+            background: #333;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active {
+            background: #333;
+            color: white;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .upload-section h3 {
+            font-family: 'Pretendard', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .channel-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .channel-option {
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .channel-option:hover {
+            background: #f8f8fc;
+            transform: translateY(-2px);
+        }
+
+        .channel-option.selected {
+            background: #333;
+            color: white;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f8fc;
+        }
+
+        .file-upload-area:hover {
+            border-color: #333;
+            background: white;
+        }
+
+        .file-upload-area.dragover {
+            background: #e8e8ec;
+            border-color: #333;
+        }
+
+        .file-upload-area p {
+            font-family: 'Pretendard', sans-serif;
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .file-upload-area .upload-icon {
+            font-size: 48px;
+            color: #333;
+            opacity: 0.6;
+        }
+
+        .upload-status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f8fc;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .upload-status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+        }
+
+        .upload-status.error {
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+
+        /* 구독 혜택 편집 섹션 */
+        .benefits-editor {
+            margin-top: 30px;
+        }
+
+        .benefit-item-editor {
+            background: #f8f8fc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .benefit-item-editor input,
+        .benefit-item-editor textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .benefit-item-editor textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .benefit-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-save {
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-delete {
+            padding: 10px 20px;
+            background: #ff5252;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-delete:hover {
+            background: #d32f2f;
+        }
+
+        .btn-add {
+            padding: 12px 24px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-preview {
+            max-width: 200px;
+            margin-top: 10px;
+        }
+
+        .image-preview img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        /* 데이터 그리드 스타일 */
+        .data-grid-section {
+            padding: 30px;
+        }
+
+        .grid-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-controls select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+        }
+
+        .btn-refresh {
+            padding: 8px 16px;
+            background: #f8f8fc;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-refresh:hover {
+            background: #333;
+            color: white;
+        }
+
+        .data-grid-container {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #data-grid-wrapper {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        #data-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 13px;
+        }
+
+        #data-grid thead {
+            background: #f8f8fc;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        #data-grid th {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            background: #f8f8fc;
+        }
+
+        #data-grid tbody tr {
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+
+        #data-grid tbody tr:hover {
+            background: #f8f8fc;
+        }
+
+        #data-grid td {
+            padding: 8px;
+            border-right: 1px solid #f0f0f0;
+        }
+
+        #data-grid td:last-child {
+            border-right: none;
+        }
+
+        #data-grid td input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 13px;
+            background: transparent;
+        }
+
+        #data-grid td input:focus {
+            outline: none;
+            border-color: #333;
+            background: white;
+        }
+
+        #data-grid td.edited {
+            background: #fff3cd;
+        }
+
+        .pagination-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .pagination-controls button {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .pagination-controls button:hover:not(:disabled) {
+            background: #f8f8fc;
+        }
+
+        .pagination-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #page-info {
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .grid-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #change-count {
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* 로딩 스피너 */
+        .loading-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #333;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .current-data-info {
+            background: #f8f8fc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .current-data-info strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <script src="/auth.js"></script>
+    
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>관리자 페이지</h1>
+            <p>구독 데이터 및 혜택 관리</p>
+            <a href="/" style="position: fixed; right: 220px; top: 25px; text-decoration: none; color: #666; font-size: 13px; display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border-radius: 6px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #ddd; height: 36px; box-sizing: border-box; z-index: 1000;" onmouseover="this.style.background='#f5f5f5'; this.style.color='#333';" onmouseout="this.style.background='white'; this.style.color='#666';">
+                <span style="font-size: 16px;">←</span> 채널 선택
+            </a>
+        </div>
+
+        <div class="admin-tabs">
+            <button class="tab-button active" onclick="switchTab('subscription')">구독 데이터</button>
+            <button class="tab-button" onclick="switchTab('images')">모델별 이미지</button>
+            <button class="tab-button" onclick="switchTab('cards')">카드 구분</button>
+            <button class="tab-button" onclick="switchTab('benefits')">구독 혜택</button>
+        </div>
+
+        <!-- 구독 데이터 탭 -->
+        <div id="subscription-tab" class="tab-content active">
+            <div class="upload-section">
+                <h3>구독 데이터 업로드</h3>
+                <div class="channel-selector">
+                    <div class="channel-option selected" data-channel="em">이마트</div>
+                    <div class="channel-option" data-channel="hp">홈플러스</div>
+                    <div class="channel-option" data-channel="et">전자랜드</div>
+                </div>
+
+                <div class="current-data-info">
+                    <strong>현재 데이터:</strong> <span id="current-subscription-info">확인 중...</span>
+                </div>
+
+                <div class="file-upload-area" id="subscription-upload">
+                    <div class="upload-icon">📊</div>
+                    <p><strong>CSV 파일을 드래그하거나 클릭하여 업로드</strong></p>
+                    <p>지원 형식: .csv</p>
+                    <p style="color: #ff5252; font-size: 12px; margin-top: 10px;">⚠️ 주의: 업로드 시 기존 데이터가 모두 삭제되고 새 데이터로 교체됩니다</p>
+                    <input type="file" id="subscription-file" accept=".csv" style="display: none;">
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="btn-save" onclick="downloadCurrentData('subscription')">📥 현재 데이터 다운로드</button>
+                    <button class="btn-save" style="background: #666;" onclick="downloadSampleCSV('subscription')">📋 샘플 양식 다운로드</button>
+                </div>
+                <div class="upload-status" id="subscription-status"></div>
+            </div>
+        </div>
+
+        <!-- 모델별 이미지 탭 -->
+        <div id="images-tab" class="tab-content">
+            <div class="upload-section">
+                <h3>모델별 이미지 업로드</h3>
+                <p style="font-family: 'Pretendard', sans-serif; color: #666; margin-bottom: 20px;">
+                    CSV 파일로 모델별 이미지 URL을 업로드해주세요. (모델명, 링크 컬럼 필요)
+                </p>
+
+                <div class="current-data-info">
+                    <strong>현재 이미지:</strong> <span id="current-images-info">확인 중...</span>
+                </div>
+
+                <div class="file-upload-area" id="images-upload">
+                    <div class="upload-icon">🖼️</div>
+                    <p><strong>이미지 데이터 CSV 파일을 드래그하거나 클릭하여 업로드</strong></p>
+                    <p>지원 형식: .csv (구독카달로그 - 모델별이미지.csv)</p>
+                    <p style="color: #ff5252; font-size: 12px; margin-top: 10px;">⚠️ 주의: 업로드 시 기존 데이터가 모두 삭제되고 새 데이터로 교체됩니다</p>
+                    <input type="file" id="images-file" accept=".csv" style="display: none;">
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="btn-save" onclick="downloadCurrentData('images')">📥 현재 데이터 다운로드</button>
+                    <button class="btn-save" style="background: #666;" onclick="downloadSampleCSV('images')">📋 샘플 양식 다운로드</button>
+                </div>
+                <div class="upload-status" id="images-status"></div>
+            </div>
+        </div>
+
+        <!-- 카드 구분 탭 -->
+        <div id="cards-tab" class="tab-content">
+            <div class="upload-section">
+                <h3>제휴카드 데이터 업로드</h3>
+                
+                <div class="current-data-info">
+                    <strong>현재 카드 데이터:</strong> <span id="current-cards-info">확인 중...</span>
+                </div>
+
+                <div class="file-upload-area" id="cards-upload">
+                    <div class="upload-icon">💳</div>
+                    <p><strong>카드 데이터 CSV 파일을 드래그하거나 클릭하여 업로드</strong></p>
+                    <p>지원 형식: .csv</p>
+                    <p style="color: #ff5252; font-size: 12px; margin-top: 10px;">⚠️ 주의: 업로드 시 기존 데이터가 모두 삭제되고 새 데이터로 교체됩니다</p>
+                    <input type="file" id="cards-file" accept=".csv" style="display: none;">
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="btn-save" onclick="downloadCurrentData('cards')">📥 현재 데이터 다운로드</button>
+                    <button class="btn-save" style="background: #666;" onclick="downloadSampleCSV('cards')">📋 샘플 양식 다운로드</button>
+                </div>
+                <div class="upload-status" id="cards-status"></div>
+            </div>
+        </div>
+
+        <!-- 구독 혜택 탭 -->
+        <div id="benefits-tab" class="tab-content">
+            <div class="benefits-editor">
+                <h3>구독 혜택 관리</h3>
+                <p style="font-family: 'Pretendard', sans-serif; color: #666; margin-bottom: 20px;">
+                    데이터베이스의 구독 혜택 데이터를 직접 편집할 수 있습니다.
+                </p>
+                <div id="benefits-list">
+                    <!-- 혜택 목록이 동적으로 로드됩니다 -->
+                </div>
+                <button class="btn-add" onclick="addNewBenefit()">+ 새 혜택 추가</button>
+            </div>
+            
+            <div class="data-grid-section" style="display: none;">
+                <h3>구독 데이터 관리</h3>
+                <p style="font-family: 'Pretendard', sans-serif; color: #666; margin-bottom: 20px;">
+                    데이터베이스의 구독 데이터를 직접 조회하고 편집할 수 있습니다.
+                </p>
+
+                <!-- 검색 및 필터 -->
+                <div class="grid-controls">
+                    <div class="search-box">
+                        <input type="text" id="grid-search" placeholder="🔍 검색 (모델명, 제품군 등)" onkeyup="searchGridData()">
+                    </div>
+                    <div class="filter-controls">
+                        <select id="channel-filter" onchange="loadGridData()">
+                            <option value="">모든 채널</option>
+                            <option value="이마트">이마트</option>
+                            <option value="홈플러스">홈플러스</option>
+                            <option value="전자랜드">전자랜드</option>
+                        </select>
+                        <select id="product-filter" onchange="loadGridData()">
+                            <option value="">모든 제품군</option>
+                        </select>
+                        <button class="btn-refresh" onclick="loadGridData()">🔄 새로고침</button>
+                    </div>
+                </div>
+
+                <!-- 데이터 그리드 컨테이너 -->
+                <div class="data-grid-container">
+                    <div id="data-grid-wrapper">
+                        <table id="data-grid">
+                            <thead id="grid-header">
+                                <!-- 헤더가 동적으로 생성됩니다 -->
+                            </thead>
+                            <tbody id="grid-body">
+                                <!-- 데이터가 동적으로 로드됩니다 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <div class="pagination-controls">
+                    <button onclick="changePage(-1)" id="prev-page">◀ 이전</button>
+                    <span id="page-info">1 / 1</span>
+                    <button onclick="changePage(1)" id="next-page">다음 ▶</button>
+                    <select id="page-size" onchange="changePageSize()">
+                        <option value="50">50개씩</option>
+                        <option value="100">100개씩</option>
+                        <option value="200">200개씩</option>
+                        <option value="500">500개씩</option>
+                    </select>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="grid-actions">
+                    <button class="btn-save" onclick="saveAllChanges()">💾 변경사항 저장</button>
+                    <span id="change-count">변경사항: 0개</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading-spinner" id="loading-spinner"></div>
+    </div>
+
+    <script>
+        // 관리자 권한 체크
+        function checkAdminAuth() {
+            if (!authClient.isAuthenticated()) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/';
+                return false;
+            }
+            
+            const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+            // 관리자 권한 체크 (position, employee_id, is_admin 확인)
+            if (userInfo.position !== '관리자' && userInfo.employee_id !== 'admin' && !userInfo.is_admin) {
+                alert('관리자 권한이 필요합니다.');
+                window.location.href = '/';
+                return false;
+            }
+            
+            return true;
+        }
+
+        // 페이지 로드 시 권한 체크
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!checkAdminAuth()) {
+                return;
+            }
+            
+            initializeAdminPage();
+        });
+
+        // 관리자 페이지 초기화
+        function initializeAdminPage() {
+            loadCurrentDataInfo();
+            setupFileUploadHandlers();
+            setupChannelSelectors();
+            // 구독 혜택 탭이 선택될 때만 데이터 로드
+            // loadBenefits 함수를 바로 호출하도록 수정
+        }
+
+        // 탭 전환
+        function switchTab(tabName) {
+            // 모든 탭 버튼과 컨텐츠 비활성화
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 선택된 탭 활성화
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // 구독 혜택 탭이 선택되면 데이터 로드
+            if (tabName === 'benefits') {
+                loadBenefits();
+            }
+        }
+
+        // 현재 데이터 정보 로드
+        async function loadCurrentDataInfo() {
+            try {
+                // 현재 선택된 채널 가져오기
+                const selectedChannel = document.querySelector('#subscription-tab .channel-option.selected')?.dataset.channel || 'em';
+                
+                // 구독 데이터 정보 (채널별로)
+                const subscriptionResponse = await authClient.apiRequest(`/api/admin/data-info/subscription?channel=${selectedChannel}`);
+                if (subscriptionResponse.ok) {
+                    const subscriptionInfo = await subscriptionResponse.json();
+                    let infoText = subscriptionInfo.message || '데이터 없음';
+                    if (subscriptionInfo.lastUpload) {
+                        const uploadDate = new Date(subscriptionInfo.lastUpload);
+                        const dateStr = uploadDate.toLocaleDateString('ko-KR');
+                        const timeStr = uploadDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+                        infoText += ` (${dateStr} ${timeStr} 업로드)`;
+                    }
+                    document.getElementById('current-subscription-info').textContent = infoText;
+                }
+                
+                // 이미지 정보
+                const imagesResponse = await authClient.apiRequest('/api/admin/data-info/images');
+                if (imagesResponse.ok) {
+                    const imagesInfo = await imagesResponse.json();
+                    let infoText = imagesInfo.message || '이미지 없음';
+                    if (imagesInfo.lastUpload) {
+                        const uploadDate = new Date(imagesInfo.lastUpload);
+                        const dateStr = uploadDate.toLocaleDateString('ko-KR');
+                        const timeStr = uploadDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+                        infoText += ` (${dateStr} ${timeStr} 업로드)`;
+                    }
+                    document.getElementById('current-images-info').textContent = infoText;
+                }
+                
+                // 카드 정보
+                const cardsResponse = await authClient.apiRequest('/api/admin/data-info/cards');
+                if (cardsResponse.ok) {
+                    const cardsInfo = await cardsResponse.json();
+                    let infoText = cardsInfo.message || '카드 데이터 없음';
+                    if (cardsInfo.lastUpload) {
+                        const uploadDate = new Date(cardsInfo.lastUpload);
+                        const dateStr = uploadDate.toLocaleDateString('ko-KR');
+                        const timeStr = uploadDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+                        infoText += ` (${dateStr} ${timeStr} 업로드)`;
+                    }
+                    document.getElementById('current-cards-info').textContent = infoText;
+                }
+            } catch (error) {
+                console.error('데이터 정보 로드 실패:', error);
+                document.getElementById('current-subscription-info').textContent = '로드 실패';
+                document.getElementById('current-images-info').textContent = '로드 실패';
+                document.getElementById('current-cards-info').textContent = '로드 실패';
+            }
+        }
+
+        // 파일 업로드 핸들러 설정
+        function setupFileUploadHandlers() {
+            // 구독 데이터 업로드
+            const subscriptionUpload = document.getElementById('subscription-upload');
+            const subscriptionFile = document.getElementById('subscription-file');
+            
+            subscriptionUpload.addEventListener('click', () => subscriptionFile.click());
+            subscriptionFile.addEventListener('change', (e) => uploadSubscriptionData(e.target.files[0]));
+            
+            setupDragAndDrop(subscriptionUpload, uploadSubscriptionData);
+            
+            // 이미지 업로드
+            const imagesUpload = document.getElementById('images-upload');
+            const imagesFile = document.getElementById('images-file');
+            
+            imagesUpload.addEventListener('click', () => imagesFile.click());
+            imagesFile.addEventListener('change', (e) => uploadImages(e.target.files[0]));
+            
+            setupDragAndDrop(imagesUpload, uploadImages);
+            
+            // 카드 데이터 업로드
+            const cardsUpload = document.getElementById('cards-upload');
+            const cardsFile = document.getElementById('cards-file');
+            
+            cardsUpload.addEventListener('click', () => cardsFile.click());
+            cardsFile.addEventListener('change', (e) => uploadCardsData(e.target.files[0]));
+            
+            setupDragAndDrop(cardsUpload, uploadCardsData);
+        }
+
+        // 드래그 앤 드롭 설정
+        function setupDragAndDrop(element, uploadFunction) {
+            element.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                element.classList.add('dragover');
+            });
+            
+            element.addEventListener('dragleave', () => {
+                element.classList.remove('dragover');
+            });
+            
+            element.addEventListener('drop', (e) => {
+                e.preventDefault();
+                element.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file) uploadFunction(file);
+            });
+        }
+
+        // 채널 선택기 설정
+        function setupChannelSelectors() {
+            document.querySelectorAll('.channel-selector').forEach(selector => {
+                selector.querySelectorAll('.channel-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        selector.querySelectorAll('.channel-option').forEach(opt => {
+                            opt.classList.remove('selected');
+                        });
+                        this.classList.add('selected');
+                        // 채널 변경 시 데이터 정보 다시 로드
+                        loadCurrentDataInfo();
+                    });
+                });
+            });
+        }
+
+        // 구독 데이터 업로드
+        async function uploadSubscriptionData(file) {
+            if (!file) return;
+            
+            const statusElement = document.getElementById('subscription-status');
+            const uploadArea = document.getElementById('subscription-upload');
+            
+            // 업로드 시작 시 UI 업데이트
+            statusElement.className = 'upload-status';
+            statusElement.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="loading-spinner" style="display: inline-block; width: 20px; height: 20px; border-width: 3px;"></div>
+                    <span>파일을 분석하고 있습니다... (${(file.size / 1024 / 1024).toFixed(2)}MB)</span>
+                </div>
+            `;
+            statusElement.style.display = 'block';
+            uploadArea.style.opacity = '0.6';
+            uploadArea.style.pointerEvents = 'none';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const channel = document.querySelector('#subscription-tab .channel-option.selected').dataset.channel;
+            formData.append('channel', channel);
+            
+            // 진행 상태 업데이트
+            let progressInterval = setInterval(() => {
+                const messages = [
+                    '데이터를 처리하고 있습니다...',
+                    '기존 데이터를 정리하고 있습니다...',
+                    '새 데이터를 저장하고 있습니다...',
+                    '거의 완료되었습니다...'
+                ];
+                const currentMessage = statusElement.querySelector('span');
+                if (currentMessage) {
+                    const currentIndex = messages.indexOf(currentMessage.textContent.split(' (')[0]);
+                    const nextIndex = (currentIndex + 1) % messages.length;
+                    currentMessage.textContent = `${messages[nextIndex]} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
+                }
+            }, 3000);
+            
+            try {
+                const response = await authClient.apiRequest('/api/admin/upload/subscription', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {} // FormData를 사용할 때는 Content-Type을 설정하지 않음
+                });
+                
+                clearInterval(progressInterval);
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    statusElement.className = 'upload-status success';
+                    statusElement.innerHTML = `✓ ${result.message}`;
+                    loadCurrentDataInfo();
+                } else {
+                    throw new Error(result.error || '업로드 실패');
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                statusElement.className = 'upload-status error';
+                statusElement.innerHTML = `✗ ${error.message}`;
+            } finally {
+                uploadArea.style.opacity = '1';
+                uploadArea.style.pointerEvents = 'auto';
+            }
+        }
+
+        // 이미지 업로드
+        async function uploadImages(file) {
+            if (!file) return;
+            
+            const statusElement = document.getElementById('images-status');
+            const uploadArea = document.getElementById('images-upload');
+            
+            statusElement.className = 'upload-status';
+            statusElement.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="loading-spinner" style="display: inline-block; width: 20px; height: 20px; border-width: 3px;"></div>
+                    <span>CSV 파일을 처리하고 있습니다... (${(file.size / 1024 / 1024).toFixed(2)}MB)</span>
+                </div>
+            `;
+            statusElement.style.display = 'block';
+            uploadArea.style.opacity = '0.6';
+            uploadArea.style.pointerEvents = 'none';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await authClient.apiRequest('/api/admin/upload/images', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {}
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    statusElement.className = 'upload-status success';
+                    statusElement.innerHTML = `✓ ${result.message}`;
+                    loadCurrentDataInfo();
+                } else {
+                    throw new Error(result.error || '업로드 실패');
+                }
+            } catch (error) {
+                statusElement.className = 'upload-status error';
+                statusElement.innerHTML = `✗ ${error.message}`;
+            } finally {
+                uploadArea.style.opacity = '1';
+                uploadArea.style.pointerEvents = 'auto';
+            }
+        }
+
+        // 카드 데이터 업로드
+        async function uploadCardsData(file) {
+            if (!file) return;
+            
+            const statusElement = document.getElementById('cards-status');
+            statusElement.className = 'upload-status';
+            statusElement.textContent = '업로드 중...';
+            statusElement.style.display = 'block';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await authClient.apiRequest('/api/admin/upload/cards', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {}
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    statusElement.className = 'upload-status success';
+                    statusElement.textContent = `✓ ${result.message}`;
+                    loadCurrentDataInfo();
+                } else {
+                    throw new Error(result.error || '업로드 실패');
+                }
+            } catch (error) {
+                statusElement.className = 'upload-status error';
+                statusElement.textContent = `✗ ${error.message}`;
+            }
+        }
+
+        // 데이터 그리드 관련 변수
+        let gridData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        let pageSize = 50;
+        let editedCells = new Map();
+        let gridColumns = [];
+
+        // 구독 혜택 데이터 로드
+        async function loadBenefits() {
+            try {
+                const response = await authClient.apiRequest('/api/benefits');
+                if (response.ok) {
+                    const benefits = await response.json();
+                    renderBenefitsList(benefits);
+                } else {
+                    console.error('혜택 데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('혜택 데이터 로드 중 오류:', error);
+                alert('혜택 데이터를 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+        
+        // 혜택 목록 렌더링
+        function renderBenefitsList(benefits) {
+            const container = document.getElementById('benefits-list');
+            container.innerHTML = '';
+            
+            benefits.forEach(benefit => {
+                const item = document.createElement('div');
+                item.className = 'benefit-item-editor';
+                item.dataset.id = benefit.id;
+                item.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">이름</label>
+                            <input type="text" value="${benefit.name || ''}" data-field="name" placeholder="혜택 이름">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">검색 키워드</label>
+                            <input type="text" value="${benefit.search_keyword || ''}" data-field="search_keyword" placeholder="검색 키워드">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">관리 타입</label>
+                        <input type="text" value="${benefit.management_type || ''}" data-field="management_type" placeholder="관리 타입">
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">아이콘 URL</label>
+                        <input type="text" value="${benefit.icon_url || ''}" data-field="icon_url" placeholder="아이콘 이미지 URL">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">세로 이미지 URL</label>
+                            <input type="text" value="${benefit.vertical_image_url || ''}" data-field="vertical_image_url" placeholder="세로 이미지 URL">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">가로 이미지 URL</label>
+                            <input type="text" value="${benefit.horizontal_image_url || ''}" data-field="horizontal_image_url" placeholder="가로 이미지 URL">
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">비디오 URL</label>
+                            <input type="text" value="${benefit.video_url || ''}" data-field="video_url" placeholder="YouTube 비디오 URL">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">HTML URL</label>
+                            <input type="text" value="${benefit.html_url || ''}" data-field="html_url" placeholder="HTML 페이지 URL">
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">서비스 전</label>
+                            <textarea data-field="service_before" placeholder="서비스 전 설명" style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Pretendard', sans-serif; font-size: 14px; resize: vertical;">${benefit.service_before || ''}</textarea>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">서비스 후</label>
+                            <textarea data-field="service_after" placeholder="서비스 후 설명" style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Pretendard', sans-serif; font-size: 14px; resize: vertical;">${benefit.service_after || ''}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">지불가치</label>
+                        <input type="text" value="${benefit.payment_value || ''}" data-field="payment_value" placeholder="지불가치 설명">
+                    </div>
+                    
+                    <div class="benefit-actions">
+                        <button class="btn-save" onclick="saveBenefit(${benefit.id})">💾 저장</button>
+                        <button class="btn-delete" onclick="deleteBenefit(${benefit.id})">🗑️ 삭제</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        // 혜택 저장
+        async function saveBenefit(benefitId) {
+            const item = document.querySelector(`[data-id="${benefitId}"]`);
+            const data = {};
+            
+            item.querySelectorAll('input[data-field], textarea[data-field]').forEach(input => {
+                data[input.dataset.field] = input.value || null;
+            });
+            
+            try {
+                const response = await authClient.apiRequest(`/api/admin/benefits/${benefitId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    alert('저장되었습니다.');
+                    loadBenefits();
+                } else {
+                    throw new Error('저장 실패');
+                }
+            } catch (error) {
+                alert('저장 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        // 새 혜택 추가
+        function addNewBenefit() {
+            const container = document.getElementById('benefits-list');
+            const newId = 'new-' + Date.now();
+            
+            const item = document.createElement('div');
+            item.className = 'benefit-item-editor';
+            item.dataset.id = newId;
+            item.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">이름</label>
+                        <input type="text" value="" data-field="name" placeholder="혜택 이름">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">검색 키워드</label>
+                        <input type="text" value="" data-field="search_keyword" placeholder="검색 키워드">
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">관리 타입</label>
+                    <input type="text" value="" data-field="management_type" placeholder="관리 타입">
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">아이콘 URL</label>
+                    <input type="text" value="" data-field="icon_url" placeholder="아이콘 이미지 URL">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                    <div>
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">세로 이미지 URL</label>
+                        <input type="text" value="" data-field="vertical_image_url" placeholder="세로 이미지 URL">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">가로 이미지 URL</label>
+                        <input type="text" value="" data-field="horizontal_image_url" placeholder="가로 이미지 URL">
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                    <div>
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">비디오 URL</label>
+                        <input type="text" value="" data-field="video_url" placeholder="YouTube 비디오 URL">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">HTML URL</label>
+                        <input type="text" value="" data-field="html_url" placeholder="HTML 페이지 URL">
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                    <div>
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">서비스 전</label>
+                        <textarea data-field="service_before" placeholder="서비스 전 설명" style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Pretendard', sans-serif; font-size: 14px; resize: vertical;"></textarea>
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">서비스 후</label>
+                        <textarea data-field="service_after" placeholder="서비스 후 설명" style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Pretendard', sans-serif; font-size: 14px; resize: vertical;"></textarea>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">지불가치</label>
+                    <input type="text" value="" data-field="payment_value" placeholder="지불가치 설명">
+                </div>
+                
+                <div class="benefit-actions">
+                    <button class="btn-save" onclick="saveNewBenefit('${newId}')">💾 저장</button>
+                    <button class="btn-delete" onclick="document.querySelector('[data-id=\\'${newId}\\']').remove()">❌ 취소</button>
+                </div>
+            `;
+            container.insertBefore(item, container.firstChild);
+        }
+        
+        // 새 혜택 저장
+        async function saveNewBenefit(tempId) {
+            const item = document.querySelector(`[data-id="${tempId}"]`);
+            const data = {};
+            
+            item.querySelectorAll('input[data-field], textarea[data-field]').forEach(input => {
+                data[input.dataset.field] = input.value || null;
+            });
+            
+            if (!data.name) {
+                alert('혜택 이름은 필수입니다.');
+                return;
+            }
+            
+            try {
+                const response = await authClient.apiRequest('/api/admin/benefits', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    alert('새 혜택이 추가되었습니다.');
+                    loadBenefits();
+                } else {
+                    throw new Error('저장 실패');
+                }
+            } catch (error) {
+                alert('저장 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 데이터 그리드 로드
+        async function loadGridData() {
+            try {
+                const channel = document.getElementById('channel-filter').value;
+                const productGroup = document.getElementById('product-filter').value;
+                
+                let url = '/api/admin/subscriptions/grid?';
+                if (channel) url += `channel=${encodeURIComponent(channel)}&`;
+                if (productGroup) url += `product_group=${encodeURIComponent(productGroup)}&`;
+                
+                const response = await authClient.apiRequest(url);
+                if (response.ok) {
+                    const result = await response.json();
+                    gridData = result.data;
+                    gridColumns = result.columns || [];
+                    
+                    // 제품군 필터 업데이트
+                    updateProductFilter();
+                    
+                    // 검색 적용
+                    searchGridData();
+                } else {
+                    console.error('데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('데이터 로드 중 오류:', error);
+                alert('데이터를 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 제품군 필터 업데이트
+        function updateProductFilter() {
+            const productGroups = [...new Set(gridData.map(row => row['제품군']))].filter(Boolean).sort();
+            const select = document.getElementById('product-filter');
+            const currentValue = select.value;
+            
+            select.innerHTML = '<option value="">모든 제품군</option>';
+            productGroups.forEach(group => {
+                select.innerHTML += `<option value="${group}">${group}</option>`;
+            });
+            
+            select.value = currentValue;
+        }
+
+        // 검색
+        function searchGridData() {
+            const searchTerm = document.getElementById('grid-search').value.toLowerCase();
+            
+            if (!searchTerm) {
+                filteredData = [...gridData];
+            } else {
+                filteredData = gridData.filter(row => {
+                    return Object.values(row).some(value => 
+                        String(value || '').toLowerCase().includes(searchTerm)
+                    );
+                });
+            }
+            
+            currentPage = 1;
+            renderGrid();
+        }
+
+        // 그리드 렌더링
+        function renderGrid() {
+            const header = document.getElementById('grid-header');
+            const body = document.getElementById('grid-body');
+            
+            // 헤더 생성
+            if (gridColumns.length > 0) {
+                header.innerHTML = '<tr>' + 
+                    gridColumns.map(col => `<th>${col}</th>`).join('') +
+                    '</tr>';
+            }
+            
+            // 페이지네이션 계산
+            const totalPages = Math.ceil(filteredData.length / pageSize);
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            // 바디 생성
+            body.innerHTML = '';
+            pageData.forEach((row, rowIndex) => {
+                const actualIndex = startIndex + rowIndex;
+                const tr = document.createElement('tr');
+                
+                gridColumns.forEach(col => {
+                    const td = document.createElement('td');
+                    const cellKey = `${row.id}_${col}`;
+                    const value = editedCells.has(cellKey) ? editedCells.get(cellKey) : (row[col] || '');
+                    
+                    // 편집 가능한 입력 필드 생성
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = value;
+                    input.dataset.rowId = row.id;
+                    input.dataset.column = col;
+                    input.dataset.originalValue = row[col] || '';
+                    
+                    // 값 변경 이벤트
+                    input.addEventListener('change', function() {
+                        handleCellEdit(this);
+                    });
+                    
+                    // 편집된 셀 표시
+                    if (editedCells.has(cellKey)) {
+                        td.classList.add('edited');
+                    }
+                    
+                    td.appendChild(input);
+                    tr.appendChild(td);
+                });
+                
+                body.appendChild(tr);
+            });
+            
+            // 페이지 정보 업데이트
+            document.getElementById('page-info').textContent = `${currentPage} / ${totalPages || 1}`;
+            document.getElementById('prev-page').disabled = currentPage <= 1;
+            document.getElementById('next-page').disabled = currentPage >= totalPages;
+            
+            // 변경사항 카운트 업데이트
+            document.getElementById('change-count').textContent = `변경사항: ${editedCells.size}개`;
+        }
+
+        // 셀 편집 처리
+        function handleCellEdit(input) {
+            const rowId = input.dataset.rowId;
+            const column = input.dataset.column;
+            const originalValue = input.dataset.originalValue;
+            const newValue = input.value;
+            const cellKey = `${rowId}_${column}`;
+            
+            if (newValue !== originalValue) {
+                editedCells.set(cellKey, newValue);
+                input.parentElement.classList.add('edited');
+            } else {
+                editedCells.delete(cellKey);
+                input.parentElement.classList.remove('edited');
+            }
+            
+            // 변경사항 카운트 업데이트
+            document.getElementById('change-count').textContent = `변경사항: ${editedCells.size}개`;
+        }
+
+        // 페이지 변경
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredData.length / pageSize);
+            currentPage = Math.max(1, Math.min(currentPage + direction, totalPages));
+            renderGrid();
+        }
+
+        // 페이지 크기 변경
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('page-size').value);
+            currentPage = 1;
+            renderGrid();
+        }
+
+        // 모든 변경사항 저장
+        async function saveAllChanges() {
+            if (editedCells.size === 0) {
+                alert('변경사항이 없습니다.');
+                return;
+            }
+            
+            if (!confirm(`${editedCells.size}개의 변경사항을 저장하시겠습니까?`)) {
+                return;
+            }
+            
+            // 변경사항을 배열로 변환
+            const changes = [];
+            editedCells.forEach((value, key) => {
+                const [rowId, column] = key.split('_');
+                changes.push({
+                    id: rowId,
+                    column: column,
+                    value: value
+                });
+            });
+            
+            try {
+                const response = await authClient.apiRequest('/api/admin/subscriptions/update', {
+                    method: 'POST',
+                    body: JSON.stringify({ changes })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`${result.updated}개의 레코드가 수정되었습니다.`);
+                    editedCells.clear();
+                    loadGridData(); // 데이터 다시 로드
+                } else {
+                    throw new Error('저장 실패');
+                }
+            } catch (error) {
+                alert('저장 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 현재 데이터 다운로드
+        async function downloadCurrentData(type) {
+            const channel = document.querySelector(`#${type}-tab .channel-option.selected`)?.dataset.channel || 'em';
+            
+            try {
+                let endpoint = `/api/admin/download/${type}`;
+                if (type !== 'images') {
+                    endpoint += `?channel=${channel}`;
+                }
+                
+                const response = await authClient.apiRequest(endpoint);
+                const data = await response.blob();
+                
+                // 다운로드 링크 생성
+                const url = window.URL.createObjectURL(data);
+                const a = document.createElement('a');
+                a.href = url;
+                if (type === 'images') {
+                    a.download = `모델별이미지_${new Date().toISOString().split('T')[0]}.csv`;
+                } else {
+                    a.download = `${type}_${channel}_${new Date().toISOString().split('T')[0]}.csv`;
+                }
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                alert('데이터 다운로드 중 오류가 발생했습니다.');
+            }
+        }
+        
+        // 샘플 CSV 다운로드
+        function downloadSampleCSV(type) {
+            let csvContent = '';
+            const dateStr = new Date().toISOString().split('T')[0];
+            
+            if (type === 'subscription') {
+                // 구독 데이터 샘플
+                csvContent = `제품군,모델명,결합유형,계약기간,관리유형,방문주기,구분,기간구분,가입조건,사용금액,요금제,선납,프로모션할인,프로모션할인종료월,결합할인,제휴카드,혜택,정상구독료\n`;
+                csvContent += `TV,OLED55G4KNA,단독형,3년,프리미엄,2개월,TV,프로모션,일반,40900,일반,X,19300,12,0,0,,21600\n`;
+                csvContent += `냉장고,S631SS35,단독형,3년,스탠다드,2개월,냉장고,프로모션,일반,29900,일반,X,11100,12,0,0,,18800\n`;
+            } else if (type === 'cards') {
+                // 카드 데이터 샘플
+                csvContent = `카드명,제품군,할인금액,할인율,조건\n`;
+                csvContent += `삼성카드,TV,5000,10,신용카드\n`;
+                csvContent += `현대카드,냉장고,3000,5,체크카드\n`;
+            } else if (type === 'images') {
+                // 이미지 데이터 샘플
+                csvContent = `no,모델명,링크,전자랜드,홈플러스,이마트\n`;
+                csvContent += `1,14Z90T-G.AA50K,https://www.lge.co.kr/kr/images/notebook/md10521845/gallery/large01.jpg,PC,PC,\n`;
+                csvContent += `2,15U50T-G.AA5VK,https://www.lge.co.kr/kr/images/notebook/md10479835/gallery/large01.jpg,PC,PC,\n`;
+            }
+            
+            // BOM 추가 (Excel에서 한글 깨짐 방지)
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sample_${type}_${dateStr}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+        
+        // 혜택 삭제
+        async function deleteBenefit(benefitId) {
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+            
+            if (benefitId.startsWith('new-')) {
+                document.querySelector(`[data-id="${benefitId}"]`).remove();
+                return;
+            }
+            
+            try {
+                const response = await authClient.apiRequest(`/api/admin/benefits/${benefitId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('삭제되었습니다.');
+                    loadBenefits();
+                } else {
+                    throw new Error('삭제 실패');
+                }
+            } catch (error) {
+                alert('삭제 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
+</body>
+</html>
