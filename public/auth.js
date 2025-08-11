@@ -1,7 +1,9 @@
 class AuthClient {
   constructor(authServerUrl = '/auth') {
-    // 항상 루트 경로의 /auth를 사용하도록 수정
-    this.authServerUrl = window.location.origin + '/auth';
+    // 운영 환경에서는 직접 auth.lgemart.com 사용 (nginx 프록시 설정 전까지 임시)
+    // TODO: nginx 프록시 설정 후 아래 줄 주석 해제
+    // this.authServerUrl = window.location.origin + '/auth';
+    this.authServerUrl = 'https://auth.lgemart.com/auth';
     this.accessToken = localStorage.getItem('access_token');
     this.refreshToken = localStorage.getItem('refresh_token');
     console.log('🏗️ AuthClient constructor - tokens loaded:', {
@@ -69,7 +71,8 @@ class AuthClient {
 
     try {
       // 올바른 엔드포인트 사용: /user/profile (가이드 문서 참조)
-      const response = await fetch(`${window.location.origin}/user/profile`, {
+      // TODO: nginx 프록시 설정 후 window.location.origin 사용
+      const response = await fetch(`https://auth.lgemart.com/user/profile`, {
         headers: {
           'Authorization': `Bearer ${this.accessToken}`
         }
