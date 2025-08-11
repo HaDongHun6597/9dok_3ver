@@ -650,10 +650,6 @@ function showPasswordChangeModal() {
         </div>
         <form id="change-password-form">
           <div style="margin-bottom: 18px;">
-            <label for="current_password" style="display: block; font-weight: 500; color: #333; margin-bottom: 6px; font-size: 14px;">현재 비밀번호</label>
-            <input type="password" id="current_password" name="current_password" required style="width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; font-family: 'Pretendard', sans-serif;" placeholder="현재 비밀번호를 입력하세요">
-          </div>
-          <div style="margin-bottom: 18px;">
             <label for="new_password" style="display: block; font-weight: 500; color: #333; margin-bottom: 6px; font-size: 14px;">새 비밀번호</label>
             <input type="password" id="new_password" name="new_password" required style="width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; font-family: 'Pretendard', sans-serif;" placeholder="새 비밀번호를 입력하세요">
             <small style="color: #888; font-size: 12px; display: block; margin-top: 4px;">💡 최소 8자리, 영문 대소문자, 숫자, 특수문자 포함</small>
@@ -675,7 +671,8 @@ function showPasswordChangeModal() {
   document.getElementById('change-password-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const currentPassword = document.getElementById('current_password').value;
+    // 초기 사용자는 현재 비밀번호가 항상 123456789
+    const currentPassword = '123456789';
     const newPassword = document.getElementById('new_password').value;
     const confirmPassword = document.getElementById('confirm_password').value;
     const errorDiv = document.getElementById('change-password-error');
