@@ -426,7 +426,7 @@ app.get('/api/image/:model_name', async (req, res) => {
 });
 
 // 사용자 정보 조회 API
-app.get('/api/user-info', authenticateToken(authClient), async (req, res) => {
+app.get('/api/user-info', async (req, res) => {
   try {
     // IP 주소 가져오기
     const clientIp = req.headers['x-forwarded-for'] || 
@@ -435,15 +435,32 @@ app.get('/api/user-info', authenticateToken(authClient), async (req, res) => {
                      req.socket.remoteAddress ||
                      req.ip;
     
-    // 사용자 정보 구성
-    const userInfo = {
-      name: req.user.username || req.user.employee_id || '사용자',
-      position: req.user.position || '',
-      branch: req.user.branch || '',
-      company: req.user.company || 'KTCS',
+    // 토큰에서 사용자 정보 추출 시도
+    let userInfo = {
+      name: '사용자',
+      position: '',
+      branch: '',
+      company: 'KTCS',
       ip: clientIp,
       realIp: req.headers['x-real-ip'] || clientIp
     };
+    
+    // 토큰이 있으면 파싱 시도
+    const token = req.headers.authorization?.split(' ')[1];
+    if (token) {
+      try {
+        // authClient를 사용하여 토큰 검증
+        const decoded = await authClient.verifyToken(token);
+        if (decoded) {
+          userInfo.name = decoded.username || decoded.employee_id || '사용자';
+          userInfo.position = decoded.position || '';
+          userInfo.branch = decoded.branch || '';
+          userInfo.company = decoded.company || 'KTCS';
+        }
+      } catch (tokenErr) {
+        console.log('토큰 검증 실패, 기본값 사용:', tokenErr.message);
+      }
+    }
     
     res.json(userInfo);
   } catch (err) {
