@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 // JWT 시크릿 키 (실제 인증 서버와 동일한 키 사용)
 const JWT_SECRET = process.env.JWT_SECRET || 'synology_auth_jwt_secret_key_2024_very_secure';
@@ -59,23 +60,18 @@ class AuthClient {
   // 사용자 정보 조회 (인증 서버에서)
   async getCurrentUser(accessToken) {
     try {
-      const response = await fetch(`${this.authServerUrl}/user/profile`, {
+      const response = await axios.get(`${this.authServerUrl}/user/profile`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
-        }
+        },
+        timeout: 5000
       });
 
-      if (response.status === 401) {
+      return response.data.user;
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
         throw new Error('토큰이 만료되었습니다.');
       }
-
-      if (!response.ok) {
-        throw new Error('사용자 정보 조회 실패');
-      }
-
-      const data = await response.json();
-      return data.user;
-    } catch (error) {
       throw new Error(`사용자 정보 조회 실패: ${error.message}`);
     }
   }
@@ -83,22 +79,16 @@ class AuthClient {
   // 토큰 갱신
   async refreshAccessToken(refreshToken) {
     try {
-      const response = await fetch(`${this.authServerUrl}/auth/refresh`, {
-        method: 'POST',
+      const response = await axios.post(`${this.authServerUrl}/auth/refresh`, {
+        refresh_token: refreshToken
+      }, {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          refresh_token: refreshToken
-        })
+        timeout: 5000
       });
 
-      if (!response.ok) {
-        throw new Error('토큰 갱신 실패');
-      }
-
-      const data = await response.json();
-      return data.tokens;
+      return response.data.tokens;
     } catch (error) {
       throw new Error(`토큰 갱신 실패: ${error.message}`);
     }

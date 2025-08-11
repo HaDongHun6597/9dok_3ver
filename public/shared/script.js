@@ -1,7 +1,7 @@
 // 워터마크 표시 함수
 async function displayWatermark() {
     try {
-        const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         console.log('토큰:', token ? '있음' : '없음');
         
         const response = await fetch('/api/user-info', {
