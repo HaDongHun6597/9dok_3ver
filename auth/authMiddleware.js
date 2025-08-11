@@ -1,15 +1,18 @@
 const jwt = require('jsonwebtoken');
 
 // JWT 시크릿 키 (실제 인증 서버와 동일한 키 사용)
-const JWT_SECRET = process.env.JWT_SECRET || 'synology-auth-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'synology_auth_jwt_secret_key_2024_very_secure';
+const JWT_ISSUER = 'synology-auth';
+const JWT_AUDIENCE = 'synology-apps';
 
 // LGEmart 인증 서버 설정 (운영 서버 사용)
 const AUTH_SERVER_URL = process.env.AUTH_SERVER_URL || 'https://auth.lgemart.com';
 
 class AuthClient {
-  constructor(authServerUrl = AUTH_SERVER_URL, jwtSecret = JWT_SECRET) {
+  constructor(authServerUrl = AUTH_SERVER_URL, jwtSecret = JWT_SECRET, jwtRefreshSecret = null) {
     this.authServerUrl = authServerUrl;
     this.jwtSecret = jwtSecret;
+    this.jwtRefreshSecret = jwtRefreshSecret;
   }
 
   // JWT 토큰 검증
@@ -31,10 +34,16 @@ class AuthClient {
         };
       }
 
-      const decoded = jwt.verify(token, this.jwtSecret);
+      // issuer와 audience 검증 포함
+      const decoded = jwt.verify(token, this.jwtSecret, {
+        issuer: JWT_ISSUER,
+        audience: JWT_AUDIENCE
+      });
+      
       // isAdmin을 is_admin으로 매핑, 숫자 1도 true로 변환
       const user = {
         ...decoded,
+        id: decoded.sub || decoded.id, // sub 필드가 실제 사용자 ID
         is_admin: decoded.isAdmin === 1 || decoded.isAdmin === true || decoded.is_admin === 1 || decoded.is_admin === true || false,
         isAdmin: decoded.isAdmin === 1 || decoded.isAdmin === true || decoded.is_admin === 1 || decoded.is_admin === true || false,
         employee_id: decoded.employee_id || decoded.sub,
@@ -96,9 +105,9 @@ class AuthClient {
   }
 }
 
-// 인증 미들웨어
+// 인증 미들웨어 - auth-system에 검증 위임
 function authenticateToken(authClient) {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -106,13 +115,26 @@ function authenticateToken(authClient) {
       return res.status(401).json({ error: '토큰이 필요합니다.' });
     }
 
-    const result = authClient.verifyToken(token);
-    if (!result.success) {
-      return res.status(403).json({ error: '유효하지 않은 토큰입니다.' });
+    try {
+      // 먼저 로컬에서 토큰 검증 시도
+      const result = authClient.verifyToken(token);
+      if (result.success) {
+        req.user = result.user;
+        return next();
+      }
+    } catch (localError) {
+      console.log('로컬 토큰 검증 실패, auth-system으로 검증 요청:', localError.message);
     }
 
-    req.user = result.user;
-    next();
+    // auth-system에 토큰 검증 요청
+    try {
+      const user = await authClient.getCurrentUser(token);
+      req.user = user;
+      next();
+    } catch (error) {
+      console.error('Auth system 검증 실패:', error.message);
+      return res.status(403).json({ error: '유효하지 않은 토큰입니다.' });
+    }
   };
 }
 
