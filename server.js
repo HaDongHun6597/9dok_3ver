@@ -3,8 +3,15 @@ const mariadb = require('mariadb');
 const cors = require('cors');
 const path = require('path');
 
+// 인증 관련 모듈 추가
+const authRoutes = require('./auth/authRoutes');
+const { AuthClient, authenticateToken, requireAdmin, requireActiveUser } = require('./auth/authMiddleware');
+
 const app = express();
 const PORT = process.env.PORT || 3008;
+
+// AuthClient 인스턴스 생성
+const authClient = new AuthClient();
 
 // 미들웨어
 app.use(cors());
@@ -22,6 +29,12 @@ app.use('/shared', express.static('public/shared'));
 app.use('/style.css', express.static('public/style.css'));
 app.use('/script.js', express.static('public/script.js'));
 app.use('/product-modal.js', express.static('public/product-modal.js'));
+app.use('/auth.js', express.static('public/auth.js'));
+app.use('/ktcs_logo_black.png', express.static('public/ktcs_logo_black.png'));
+app.use('/ktcs_logo_white.png', express.static('public/ktcs_logo_white.png'));
+
+// 인증 라우트 추가
+app.use('/auth', authRoutes);
 
 // 기본 루트는 채널 선택 페이지 표시
 app.get('/', (req, res) => {
@@ -53,9 +66,9 @@ const pool = mariadb.createPool({
   connectionLimit: 10
 });
 
-// API 라우트
+// API 라우트 (인증 필요)
 // 모든 제품 조회
-app.get('/api/products', async (req, res) => {
+app.get('/api/products', authenticateToken(authClient), requireActiveUser, async (req, res) => {
   let conn;
   try {
     const { category, search, page = 1, limit = 50 } = req.query;
@@ -93,7 +106,7 @@ app.get('/api/products', async (req, res) => {
 });
 
 // 제품 카테고리 목록
-app.get('/api/categories', async (req, res) => {
+app.get('/api/categories', authenticateToken(authClient), requireActiveUser, async (req, res) => {
   let conn;
   try {
     // 채널 감지 및 테이블 선택
@@ -111,7 +124,7 @@ app.get('/api/categories', async (req, res) => {
 });
 
 // 정확한 조건으로 제품 찾기 (먼저 배치)
-app.get('/api/products/find-exact', async (req, res) => {
+app.get('/api/products/find-exact', authenticateToken(authClient), requireActiveUser, async (req, res) => {
   let conn;
   try {
     const filters = req.query;
@@ -164,7 +177,7 @@ app.get('/api/products/find-exact', async (req, res) => {
 });
 
 // 특정 제품 상세 조회
-app.get('/api/products/:id', async (req, res) => {
+app.get('/api/products/:id', authenticateToken(authClient), requireActiveUser, async (req, res) => {
   let conn;
   try {
     const { id } = req.params;
@@ -189,7 +202,7 @@ app.get('/api/products/:id', async (req, res) => {
 });
 
 // 단계별 제품 옵션 조회
-app.get('/api/product-options/:field', async (req, res) => {
+app.get('/api/product-options/:field', authenticateToken(authClient), requireActiveUser, async (req, res) => {
   let conn;
   try {
     // URL 디코딩을 통해 한글 필드명 처리
@@ -262,7 +275,7 @@ app.get('/api/product-options/:field', async (req, res) => {
 
 
 // 제휴카드 목록 조회
-app.get('/api/partner-cards', async (req, res) => {
+app.get('/api/partner-cards', authenticateToken(authClient), requireActiveUser, async (req, res) => {
   let conn;
   try {
     // 채널 감지 및 필터 조건 설정
