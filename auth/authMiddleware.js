@@ -105,7 +105,7 @@ class AuthClient {
   }
 }
 
-// 인증 미들웨어 - auth-system에 검증 위임
+// 인증 미들웨어 - auth-system에 완전히 위임 (pass-through)
 function authenticateToken(authClient) {
   return async (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -115,18 +115,7 @@ function authenticateToken(authClient) {
       return res.status(401).json({ error: '토큰이 필요합니다.' });
     }
 
-    try {
-      // 먼저 로컬에서 토큰 검증 시도
-      const result = authClient.verifyToken(token);
-      if (result.success) {
-        req.user = result.user;
-        return next();
-      }
-    } catch (localError) {
-      console.log('로컬 토큰 검증 실패, auth-system으로 검증 요청:', localError.message);
-    }
-
-    // auth-system에 토큰 검증 요청
+    // auth-system에 토큰 검증 요청 (pass-through)
     try {
       const user = await authClient.getCurrentUser(token);
       req.user = user;
