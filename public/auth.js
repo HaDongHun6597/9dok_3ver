@@ -68,7 +68,8 @@ class AuthClient {
     }
 
     try {
-      const response = await fetch(`${this.authServerUrl}/me`, {
+      // 올바른 엔드포인트 사용: /user/profile (가이드 문서 참조)
+      const response = await fetch(`${window.location.origin}/user/profile`, {
         headers: {
           'Authorization': `Bearer ${this.accessToken}`
         }
@@ -112,6 +113,7 @@ class AuthClient {
     }
 
     try {
+      // 올바른 엔드포인트: /auth/refresh
       const response = await fetch(`${this.authServerUrl}/refresh`, {
         method: 'POST',
         headers: {
@@ -156,6 +158,7 @@ class AuthClient {
     }
 
     try {
+      // 올바른 엔드포인트: /auth/change-password
       const response = await fetch(`${this.authServerUrl}/change-password`, {
         method: 'POST',
         headers: {
@@ -184,7 +187,8 @@ class AuthClient {
   async logout() {
     if (this.accessToken) {
       try {
-        await fetch(`${this.authServerUrl}/auth/logout`, {
+        // 올바른 엔드포인트: /auth/logout (auth가 중복되지 않도록)
+        await fetch(`${this.authServerUrl}/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${this.accessToken}`
