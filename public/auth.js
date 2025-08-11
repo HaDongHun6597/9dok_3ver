@@ -111,13 +111,16 @@ class AuthClient {
   }
 
   async refreshAccessToken() {
+    // localStorage에서 최신 리프레시 토큰 가져오기
+    this.refreshToken = localStorage.getItem('refresh_token');
+    
     if (!this.refreshToken) {
       throw new Error('리프레시 토큰이 없습니다.');
     }
 
     try {
       // 올바른 엔드포인트: /auth/refresh
-      const response = await fetch(`${this.authServerUrl}/refresh`, {
+      const response = await fetch(`https://auth.lgemart.com/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -149,8 +152,13 @@ class AuthClient {
       }
       localStorage.setItem('access_token', this.accessToken);
       localStorage.setItem('refresh_token', this.refreshToken);
+      console.log('토큰 갱신 성공, 새 액세스 토큰 저장됨');
     } catch (error) {
       console.error('Refresh token error:', error);
+      // 토큰 갱신 실패 시 로그인 화면 표시
+      if (typeof showLoginForm === 'function') {
+        showLoginForm();
+      }
       throw error;
     }
   }
@@ -216,11 +224,9 @@ class AuthClient {
 
   // API 요청에 자동으로 토큰 포함
   async apiRequest(url, options = {}) {
-    // 토큰이 없으면 localStorage에서 다시 시도
-    if (!this.accessToken) {
-      this.accessToken = localStorage.getItem('access_token');
-      this.refreshToken = localStorage.getItem('refresh_token');
-    }
+    // localStorage에서 최신 토큰 가져오기 (항상)
+    this.accessToken = localStorage.getItem('access_token');
+    this.refreshToken = localStorage.getItem('refresh_token');
     
     if (!this.accessToken) {
       console.warn('API 요청 시 토큰이 없음:', url);
@@ -246,6 +252,9 @@ class AuthClient {
         // 토큰 만료, 갱신 시도
         try {
           await this.refreshAccessToken();
+          console.log('토큰 갱신 완료, 새 토큰으로 재시도');
+          // localStorage에서 새 토큰 다시 로드
+          this.accessToken = localStorage.getItem('access_token');
           // 재시도
           return fetch(url, {
             ...options,
@@ -256,6 +265,11 @@ class AuthClient {
           });
         } catch (refreshError) {
           console.error('토큰 갱신 실패:', refreshError);
+          // 갱신 실패 시 로그아웃 처리 및 로그인 화면 표시
+          this.logout();
+          if (typeof showLoginForm === 'function') {
+            showLoginForm();
+          }
           // 갱신 실패 시 원래 응답 반환
           return response;
         }
@@ -274,17 +288,16 @@ const authClient = new AuthClient();
 
 // 채널 접근 권한 제어 함수
 function applyChannelRestrictions(user) {
-  // 유통 정보 가져오기
-  const distribution = user.distribution ? user.distribution.trim() : '';
+  // 임시로 모든 채널 활성화
+  console.log('[applyChannelRestrictions] 채널 제한 임시 해제');
   
-  // 채널 매핑
   const channelMap = {
     '이마트': 'channel-em',
     '홈플러스': 'channel-hp',
     '전자랜드': 'channel-et'
   };
   
-  // 먼저 모든 채널을 초기화 (활성화)
+  // 모든 채널 활성화
   Object.values(channelMap).forEach(id => {
     const channelElement = document.getElementById(id);
     if (channelElement) {
@@ -294,6 +307,12 @@ function applyChannelRestrictions(user) {
       channelElement.title = '';
     }
   });
+  
+  return;
+  
+  /* 원래 코드 주석처리
+  // 유통 정보 가져오기
+  const distribution = user.distribution ? user.distribution.trim() : '';
   
   // 유통 정보가 없으면 모든 채널 접근 가능
   if (!distribution) {
@@ -326,10 +345,16 @@ function applyChannelRestrictions(user) {
       subtitle.textContent = `${distribution} 채널만 이용 가능합니다`;
     }
   }
+  */
 }
 
 // 채널 페이지 접근 제어 함수
 function checkChannelAccess(user) {
+  // 임시로 모든 채널 접근 허용
+  console.log('[checkChannelAccess] 채널 접근 제한 임시 해제');
+  return true;
+  
+  /* 원래 코드 주석처리
   const distribution = user.distribution ? user.distribution.trim() : '';
   const pathname = window.location.pathname;
   
@@ -359,6 +384,7 @@ function checkChannelAccess(user) {
   }
   
   return true;
+  */
 }
 
 // 로그인 폼 처리

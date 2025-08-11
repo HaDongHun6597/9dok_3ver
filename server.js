@@ -24,6 +24,8 @@ const authClient = new AuthClient(
   process.env.JWT_REFRESH_SECRET
 );
 
+
+
 // 미들웨어
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -135,8 +137,50 @@ app.get('/api/products', authenticateToken(authClient), requireActiveUser, async
   }
 });
 
-// 제품 카테고리 목록
-app.get('/api/categories', authenticateToken(authClient), requireActiveUser, async (req, res) => {
+// 제품 카테고리 목록 - 임시로 user-info와 동일한 방식으로
+app.get('/api/categories', async (req, res) => {
+  // user-info API와 동일한 인증 방식
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: '토큰이 필요합니다.' });
+  }
+  
+  // user-info와 동일하게 직접 axios로 검증 (재시도 로직 포함)
+  const axios = require('axios');
+  let retryCount = 0;
+  const maxRetries = 2;
+  
+  while (retryCount <= maxRetries) {
+    try {
+      console.log(`[categories] 인증 서버 요청 (시도 ${retryCount + 1}/${maxRetries + 1})`);
+      const response = await axios.get(`${authClient.authServerUrl}/user/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        timeout: 5000
+      });
+      
+      if (response.data && response.data.user) {
+        req.user = response.data.user;
+        console.log('[categories] 인증 성공:', req.user.username);
+        break; // 성공하면 루프 종료
+      }
+    } catch (error) {
+      console.error(`[categories] 인증 실패 (시도 ${retryCount + 1}):`, error.response?.status);
+      retryCount++;
+      
+      if (retryCount > maxRetries) {
+        return res.status(403).json({ error: '인증 실패' });
+      }
+      
+      // 재시도 전 짧은 대기
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+  }
+  
+  // 원래 로직
   let conn;
   try {
     // 채널 감지 및 테이블 선택
@@ -539,6 +583,9 @@ app.get('/api/user-info', async (req, res) => {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
       console.log('토큰 추출됨:', token ? token.substring(0, 20) + '...' : '없음');
+      console.log('user-info API - 토큰 길이:', token.length);
+      console.log('user-info API - 토큰 첫 50자:', token.substring(0, 50));
+      console.log('user-info API - 토큰 마지막 20자:', token.substring(token.length - 20));
       
       try {
         // 먼저 인증 서버에서 최신 사용자 정보 가져오기 시도

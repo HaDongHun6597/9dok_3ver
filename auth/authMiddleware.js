@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const axios = require('axios');
 
 // JWT 시크릿 키 (실제 인증 서버와 동일한 키 사용)
 const JWT_SECRET = process.env.JWT_SECRET || 'synology_auth_jwt_secret_key_2024_very_secure';
@@ -57,18 +56,34 @@ class AuthClient {
     }
   }
 
-  // 사용자 정보 조회 (인증 서버에서)
+  // 사용자 정보 조회 (인증 서버에서) - server.js와 완전히 동일하게
   async getCurrentUser(accessToken) {
+    const axios = require('axios');
     try {
+      console.log('[getCurrentUser] 요청 시작:', `${this.authServerUrl}/user/profile`);
+      console.log('[getCurrentUser] 토큰 길이:', accessToken.length);
+      console.log('[getCurrentUser] 토큰 앞부분:', accessToken.substring(0, 50));
+      
       const response = await axios.get(`${this.authServerUrl}/user/profile`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         },
         timeout: 5000
       });
-
-      return response.data.user;
+      
+      if (response.data && response.data.user) {
+        console.log('[getCurrentUser] 응답 성공:', response.data.user.username);
+        return response.data.user;
+      }
+      throw new Error('사용자 정보가 없습니다.');
     } catch (error) {
+      console.error('[getCurrentUser] axios 에러:', error.response?.status, error.message);
+      if (error.response) {
+        console.error('[getCurrentUser] 에러 상세:', JSON.stringify(error.response.data));
+      }
+      console.error('[getCurrentUser] 사용된 URL:', `${this.authServerUrl}/user/profile`);
+      console.error('[getCurrentUser] 사용된 토큰:', accessToken.substring(0, 30) + '...');
+      
       if (error.response && error.response.status === 401) {
         throw new Error('토큰이 만료되었습니다.');
       }
@@ -78,6 +93,7 @@ class AuthClient {
 
   // 토큰 갱신
   async refreshAccessToken(refreshToken) {
+    const axios = require('axios');
     try {
       const response = await axios.post(`${this.authServerUrl}/auth/refresh`, {
         refresh_token: refreshToken
@@ -107,11 +123,17 @@ function authenticateToken(authClient) {
 
     // auth-system에 토큰 검증 요청 (pass-through)
     try {
+      console.log('토큰 검증 시작:', token.substring(0, 20) + '...');
+      console.log('authenticateToken - 토큰 길이:', token.length);
+      console.log('authenticateToken - 토큰 첫 50자:', token.substring(0, 50));
+      console.log('authenticateToken - 토큰 마지막 20자:', token.substring(token.length - 20));
       const user = await authClient.getCurrentUser(token);
+      console.log('토큰 검증 성공, 사용자:', user.username);
       req.user = user;
       next();
     } catch (error) {
       console.error('Auth system 검증 실패:', error.message);
+      console.error('Auth URL:', authClient.authServerUrl);
       return res.status(403).json({ error: '유효하지 않은 토큰입니다.' });
     }
   };
@@ -127,7 +149,14 @@ function requireAdmin(req, res, next) {
 
 // 활성 사용자 확인 미들웨어
 function requireActiveUser(req, res, next) {
+  console.log('[requireActiveUser] 사용자 상태:', {
+    user: req.user ? '있음' : '없음',
+    is_active: req.user?.is_active,
+    username: req.user?.username
+  });
+  
   if (!req.user || !req.user.is_active) {
+    console.log('[requireActiveUser] 비활성 사용자로 차단됨');
     return res.status(403).json({ error: '비활성 사용자입니다.' });
   }
   next();
