@@ -46,9 +46,12 @@ async function displayWatermark() {
         // 워터마크 간격 (픽셀)
         const spacing = 450; // 워터마크 간의 간격 (더 넓게)
         
+        // 헤더 영역 높이 (상단 120px 정도는 워터마크 제외)
+        const headerOffset = 120;
+        
         // 필요한 워터마크 개수 계산 (여유 있게)
         const cols = Math.ceil(screenWidth / spacing) + 2;
-        const rows = Math.ceil(screenHeight / spacing) + 2;
+        const rows = Math.ceil((screenHeight - headerOffset) / spacing) + 2;
         
         // 워터마크 생성
         for (let row = 0; row < rows; row++) {
@@ -56,9 +59,9 @@ async function displayWatermark() {
                 const watermark = document.createElement('div');
                 watermark.className = 'watermark';
                 
-                // 위치 계산 (중앙 정렬을 위한 오프셋)
+                // 위치 계산 (헤더 영역 아래부터 시작)
                 const x = col * spacing - spacing;
-                const y = row * spacing - spacing;
+                const y = row * spacing - spacing + headerOffset;
                 
                 watermark.style.left = `${x}px`;
                 watermark.style.top = `${y}px`;
@@ -95,8 +98,9 @@ function createDefaultWatermarks() {
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
     const spacing = 450; // 더 넓은 간격
+    const headerOffset = 120; // 헤더 영역 제외
     const cols = Math.ceil(screenWidth / spacing) + 2;
-    const rows = Math.ceil(screenHeight / spacing) + 2;
+    const rows = Math.ceil((screenHeight - headerOffset) / spacing) + 2;
     
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
@@ -104,7 +108,7 @@ function createDefaultWatermarks() {
             watermark.className = 'watermark';
             
             const x = col * spacing - spacing;
-            const y = row * spacing - spacing;
+            const y = row * spacing - spacing + headerOffset;
             
             watermark.style.left = `${x}px`;
             watermark.style.top = `${y}px`;
