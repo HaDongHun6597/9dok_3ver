@@ -293,7 +293,7 @@ class SubscriptionCalculator {
                     const data = await response.json();
                     if (data.imageUrl) {
                         const imageContainer = card.querySelector('.product-image');
-                        imageContainer.innerHTML = `<img src="${data.imageUrl}" alt="${modelName}" style="width:100%; height:100%; object-fit:cover; border-radius: 8px;">`;
+                        imageContainer.innerHTML = `<img src="${data.imageUrl}" alt="${modelName}" style="width:100%; height:100%; object-fit:contain; border-radius: 8px;">`;
                     }
                 }
             }
