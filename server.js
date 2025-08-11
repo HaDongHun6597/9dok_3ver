@@ -425,6 +425,33 @@ app.get('/api/image/:model_name', async (req, res) => {
   }
 });
 
+// 사용자 정보 조회 API
+app.get('/api/user-info', authenticateToken(authClient), async (req, res) => {
+  try {
+    // IP 주소 가져오기
+    const clientIp = req.headers['x-forwarded-for'] || 
+                     req.headers['x-real-ip'] || 
+                     req.connection.remoteAddress ||
+                     req.socket.remoteAddress ||
+                     req.ip;
+    
+    // 사용자 정보 구성
+    const userInfo = {
+      name: req.user.username || req.user.employee_id || '사용자',
+      position: req.user.position || '',
+      branch: req.user.branch || '',
+      company: req.user.company || 'KTCS',
+      ip: clientIp,
+      realIp: req.headers['x-real-ip'] || clientIp
+    };
+    
+    res.json(userInfo);
+  } catch (err) {
+    console.error('사용자 정보 조회 오류:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============= 관리자 API 시작 =============
 
 // multer 설정

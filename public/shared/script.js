@@ -1069,9 +1069,47 @@ function initializeCalculator() {
     }
 }
 
+// 워터마크 표시 함수
+async function displayWatermark() {
+    try {
+        const response = await fetch('/api/user-info', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        
+        if (response.ok) {
+            const userInfo = await response.json();
+            
+            // 워터마크 요소 생성
+            const watermark = document.createElement('div');
+            watermark.className = 'watermark';
+            
+            // 사용자 정보 구성
+            let userInfoText = userInfo.name;
+            if (userInfo.position) userInfoText += ` / ${userInfo.position}`;
+            if (userInfo.branch) userInfoText += ` / ${userInfo.branch}`;
+            userInfoText += ` / ${userInfo.company}`;
+            
+            // IP 정보
+            const ipText = `${userInfo.ip} / ${userInfo.realIp}`;
+            
+            watermark.innerHTML = `
+                <div class="user-info">${userInfoText}</div>
+                <div class="ip-info">${ipText}</div>
+            `;
+            
+            document.body.appendChild(watermark);
+        }
+    } catch (error) {
+        console.error('워터마크 표시 오류:', error);
+    }
+}
+
 // DOM이 준비되었을 때 초기화
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded 이벤트 발생');
+    displayWatermark(); // 워터마크 표시
     initializeCalculator();
 });
 

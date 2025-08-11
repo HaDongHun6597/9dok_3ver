@@ -1407,3 +1407,31 @@ body {
     font-family: 'Pretendard', sans-serif;
     max-width: 590px !important; /* 커스텀 알림창 너비 조정 */
 }
+
+/* 워터마크 스타일 */
+.watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: rgba(0, 0, 0, 0.08);
+    font-weight: 700;
+    text-align: center;
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+    user-select: none;
+    font-family: 'Pretendard', sans-serif;
+    line-height: 1.6;
+}
+
+.watermark .user-info {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.watermark .ip-info {
+    font-size: 20px;
+    opacity: 0.8;
+}
