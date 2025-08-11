@@ -18,7 +18,8 @@
       "Bash(git push:*)",
       "Bash(cmd //c:*)",
       "Bash(mysql:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }

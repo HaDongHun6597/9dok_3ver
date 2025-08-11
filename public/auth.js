@@ -13,28 +13,6 @@ class AuthClient {
   }
 
   async login(employeeId, password) {
-    // 관리자 계정은 mock 토큰 사용 (개발 환경)
-    if (employeeId === '1017701' || employeeId === 'admin') {
-      console.log('Using mock token for admin user');
-      this.accessToken = 'mock-access-token-1017701';
-      this.refreshToken = 'mock-refresh-token-1017701';
-      localStorage.setItem('access_token', this.accessToken);
-      localStorage.setItem('refresh_token', this.refreshToken);
-      
-      const userInfo = {
-        id: 1,
-        employee_id: '1017701',
-        username: '하동훈',
-        company: 'KTcs',
-        team: 'IT팀',
-        position: '관리자',
-        is_admin: true,
-        is_active: true
-      };
-      localStorage.setItem('user_info', JSON.stringify(userInfo));
-      return { user: userInfo, must_change_password: false };
-    }
-    
     try {
       const response = await fetch(`${this.authServerUrl}/login`, {
         method: 'POST',
@@ -231,7 +209,14 @@ class AuthClient {
 
   // API 요청에 자동으로 토큰 포함
   async apiRequest(url, options = {}) {
+    // 토큰이 없으면 localStorage에서 다시 시도
     if (!this.accessToken) {
+      this.accessToken = localStorage.getItem('access_token');
+      this.refreshToken = localStorage.getItem('refresh_token');
+    }
+    
+    if (!this.accessToken) {
+      console.warn('API 요청 시 토큰이 없음:', url);
       throw new Error('인증이 필요합니다.');
     }
 
@@ -250,16 +235,23 @@ class AuthClient {
       });
 
       if (response.status === 401 || response.status === 403) {
+        console.log(`인증 오류 (${response.status}) - 토큰 갱신 시도:`, url);
         // 토큰 만료, 갱신 시도
-        await this.refreshAccessToken();
-        // 재시도
-        return fetch(url, {
-          ...options,
-          headers: {
-            ...headers,
-            'Authorization': `Bearer ${this.accessToken}`
-          }
-        });
+        try {
+          await this.refreshAccessToken();
+          // 재시도
+          return fetch(url, {
+            ...options,
+            headers: {
+              ...headers,
+              'Authorization': `Bearer ${this.accessToken}`
+            }
+          });
+        } catch (refreshError) {
+          console.error('토큰 갱신 실패:', refreshError);
+          // 갱신 실패 시 원래 응답 반환
+          return response;
+        }
       }
 
       return response;
@@ -560,7 +552,26 @@ function showLoginForm() {
 function showAuthenticatedState(user) {
   // 사용자 정보 표시 - 지점 또는 직책 표시
   const displayInfo = user.branch || user.position || '';
-  const userInfoHtml = `
+  
+  // 채널 페이지인지 확인 (채널 선택 버튼 표시 여부 결정)
+  // 관리자 페이지도 포함
+  const isChannelPage = window.location.pathname.startsWith('/em') || 
+                        window.location.pathname.startsWith('/hp') || 
+                        window.location.pathname.startsWith('/et') ||
+                        window.location.pathname.startsWith('/admin');
+  
+  // 채널 페이지일 때는 채널 선택 버튼을 고려한 레이아웃
+  const userInfoHtml = isChannelPage ? `
+    <div id="user-info-container" style="position: fixed; top: 25px; right: 30px; display: flex; align-items: center; gap: 10px; z-index: 1000; font-family: 'Pretendard', sans-serif;">
+      <a href="/" class="back-to-main" style="text-decoration: none; color: #666; font-size: 13px; display: flex; align-items: center; gap: 5px; padding: 8px 12px; background: white; border-radius: 6px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #ddd; height: 36px; box-sizing: border-box; white-space: nowrap;" onmouseover="this.style.background='#f5f5f5'; this.style.color='#333';" onmouseout="this.style.background='white'; this.style.color='#666';">
+        <span style="font-size: 16px;">←</span> 채널 선택
+      </a>
+      <div id="user-info" style="background: white; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #ddd; height: 36px; display: flex; align-items: center; box-sizing: border-box; white-space: nowrap;">
+        <span style="font-size: 13px; font-weight: 500; color: #333;">${user.username}님 ${displayInfo ? `<span style="color: #888; font-weight: 400;">(${displayInfo})</span>` : ''}</span>
+        <button onclick="handleLogout()" style="margin-left: 10px; padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: background 0.2s; font-family: 'Pretendard', sans-serif; white-space: nowrap;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#666'">로그아웃</button>
+      </div>
+    </div>
+  ` : `
     <div id="user-info" style="position: fixed; top: 25px; right: 30px; background: white; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; font-family: 'Pretendard', sans-serif; border: 1px solid #ddd; height: 36px; display: flex; align-items: center; box-sizing: border-box;">
       <span style="font-size: 13px; font-weight: 500; color: #333;">${user.username}님 ${displayInfo ? `<span style="color: #888; font-weight: 400;">(${displayInfo})</span>` : ''}</span>
       <button onclick="handleLogout()" style="margin-left: 10px; padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; transition: background 0.2s; font-family: 'Pretendard', sans-serif;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='#666'">로그아웃</button>
@@ -575,9 +586,22 @@ function showAuthenticatedState(user) {
 
   // 기존 사용자 정보 제거 후 추가
   const existingUserInfo = document.getElementById('user-info');
+  const existingContainer = document.getElementById('user-info-container');
   if (existingUserInfo) {
     existingUserInfo.remove();
   }
+  if (existingContainer) {
+    existingContainer.remove();
+  }
+  
+  // 채널 페이지에서 기존 채널 선택 버튼 숨기기
+  const existingBackButton = document.querySelector('.back-to-main');
+  if (existingBackButton && (window.location.pathname.startsWith('/em') || 
+                             window.location.pathname.startsWith('/hp') || 
+                             window.location.pathname.startsWith('/et'))) {
+    existingBackButton.style.display = 'none';
+  }
+  
   document.body.insertAdjacentHTML('beforeend', userInfoHtml);
 }
 
@@ -585,7 +609,10 @@ function showAuthenticatedState(user) {
 async function handleLogout() {
   try {
     await authClient.logout();
-    document.getElementById('user-info').remove();
+    const userInfo = document.getElementById('user-info');
+    const userContainer = document.getElementById('user-info-container');
+    if (userInfo) userInfo.remove();
+    if (userContainer) userContainer.remove();
     
     // 채널 선택 페이지인 경우 채널 비활성화
     if (window.location.pathname === '/' || window.location.pathname === '/channel-select.html') {

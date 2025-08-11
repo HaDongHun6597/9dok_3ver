@@ -28,8 +28,21 @@ class SubscriptionCalculator {
     
     initModal() {
         try {
-            this.modal = new ProductSelectionModal(this);
-            console.log('ProductSelectionModal 초기화 완료');
+            // ProductSelectionModal이 정의되어 있는지 확인
+            if (typeof ProductSelectionModal === 'undefined') {
+                console.error('ProductSelectionModal이 정의되지 않음');
+                // window 객체에서 시도
+                if (typeof window.ProductSelectionModal !== 'undefined') {
+                    console.log('window.ProductSelectionModal 사용');
+                    this.modal = new window.ProductSelectionModal(this);
+                } else {
+                    console.error('ProductSelectionModal을 찾을 수 없음');
+                    return;
+                }
+            } else {
+                this.modal = new ProductSelectionModal(this);
+            }
+            console.log('ProductSelectionModal 초기화 완료', this.modal);
         } catch (error) {
             console.error('ProductSelectionModal 초기화 실패:', error);
         }
@@ -54,12 +67,31 @@ class SubscriptionCalculator {
     
     async loadCategories() {
         try {
-            const response = await authClient.apiRequest('/api/categories');
-            if (response.ok) {
-                this.categories = await response.json();
-                console.log('카테고리 로드 완료:', this.categories.length, '개');
+            // authClient가 정의되어 있는지 확인
+            if (typeof authClient === 'undefined') {
+                console.error('authClient가 정의되지 않음');
+                // authClient 없이 직접 fetch 사용
+                const token = localStorage.getItem('access_token');
+                const response = await fetch('/api/categories', {
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    }
+                });
+                if (response.ok) {
+                    this.categories = await response.json();
+                    console.log('카테고리 로드 완료 (fetch):', this.categories.length, '개');
+                } else {
+                    console.error('카테고리 로딩 실패 (fetch):', response.status);
+                }
             } else {
-                console.error('카테고리 로딩 실패:', response.status);
+                // authClient 사용
+                const response = await authClient.apiRequest('/api/categories');
+                if (response.ok) {
+                    this.categories = await response.json();
+                    console.log('카테고리 로드 완료 (authClient):', this.categories.length, '개');
+                } else {
+                    console.error('카테고리 로딩 실패 (authClient):', response.status);
+                }
             }
         } catch (error) {
             console.error('카테고리 로딩 실패:', error);
@@ -80,12 +112,26 @@ class SubscriptionCalculator {
         // 제품 추가 버튼
         const addProductCard = document.getElementById('addProductCard');
         if (addProductCard) {
-            addProductCard.addEventListener('click', () => {
+            // 기존 이벤트 리스너 제거
+            const newAddProductCard = addProductCard.cloneNode(true);
+            addProductCard.parentNode.replaceChild(newAddProductCard, addProductCard);
+            
+            newAddProductCard.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 console.log('제품 추가 버튼 클릭됨');
-                if (this.modal) {
+                console.log('모달 상태:', this.modal);
+                
+                if (this.modal && typeof this.modal.openModal === 'function') {
+                    console.log('모달 열기 시도');
                     this.modal.openModal();
                 } else {
-                    console.error('모달이 초기화되지 않음');
+                    console.error('모달이 초기화되지 않음 또는 openModal 메서드가 없음');
+                    // 다시 초기화 시도
+                    this.initModal();
+                    if (this.modal && typeof this.modal.openModal === 'function') {
+                        this.modal.openModal();
+                    }
                 }
             });
             console.log('제품 추가 버튼 이벤트 리스너 등록됨');
@@ -1452,10 +1498,19 @@ window.addEventListener('click', function(event) {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    calculator = new SubscriptionCalculator();
+    console.log('DOMContentLoaded - script.js');
+    console.log('authClient 상태:', typeof authClient !== 'undefined' ? '정의됨' : '정의되지 않음');
+    console.log('ProductSelectionModal 상태:', typeof ProductSelectionModal !== 'undefined' ? '정의됨' : '정의되지 않음');
     
-    // 구독 혜택 초기화
-    subscriptionBenefits.init();
+    // authClient가 로드될 때까지 약간 대기
+    setTimeout(() => {
+        console.log('SubscriptionCalculator 초기화');
+        calculator = new SubscriptionCalculator();
+        window.calculator = calculator; // 디버깅용
+        
+        // 구독 혜택 초기화
+        subscriptionBenefits.init();
+    }, 100);
     
     // 레이아웃 로딩 완료 표시
     const productsGrid = document.getElementById('productsGrid');

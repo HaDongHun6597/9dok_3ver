@@ -32,8 +32,8 @@ async function displayWatermark() {
             if (userInfo.branch) userInfoText += ` / ${userInfo.branch}`;
             userInfoText += ` / ${userInfo.company || 'KTCS'}`;
             
-            // IP 정보
-            const ipText = `${userInfo.ip || 'IP 없음'} / ${userInfo.realIp || 'Real IP 없음'}`;
+            // IP 정보 (realIp만 사용)
+            const ipText = userInfo.realIp || 'IP 정보 없음';
             
             watermark.innerHTML = `
                 <div class="user-info">${userInfoText}</div>
@@ -47,7 +47,7 @@ async function displayWatermark() {
             watermark.className = 'watermark';
             watermark.innerHTML = `
                 <div class="user-info">미인증 사용자 / KTCS</div>
-                <div class="ip-info">IP 정보 없음</div>
+                <div class="ip-info">정보 없음</div>
             `;
             document.body.appendChild(watermark);
         }
@@ -58,7 +58,7 @@ async function displayWatermark() {
         watermark.className = 'watermark';
         watermark.innerHTML = `
             <div class="user-info">사용자 정보 없음 / KTCS</div>
-            <div class="ip-info">IP 정보 없음</div>
+            <div class="ip-info">정보 없음</div>
         `;
         document.body.appendChild(watermark);
     }

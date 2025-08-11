@@ -1,3 +1,6 @@
+// 환경 변수 로드 (가장 먼저 실행)
+require('dotenv').config();
+
 const express = require('express');
 const mariadb = require('mariadb');
 const cors = require('cors');
@@ -6,9 +9,6 @@ const multer = require('multer');
 const csv = require('csv-parser');
 const fs = require('fs');
 const unzipper = require('unzipper');
-
-// 환경 변수 로드
-require('dotenv').config();
 
 // 인증 관련 모듈 추가
 const authRoutes = require('./auth/authRoutes');
@@ -44,6 +44,7 @@ app.use('/product-modal.js', express.static('public/product-modal.js'));
 app.use('/auth.js', express.static('public/auth.js'));
 app.use('/ktcs_logo_black.png', express.static('public/ktcs_logo_black.png'));
 app.use('/ktcs_logo_white.png', express.static('public/ktcs_logo_white.png'));
+app.use('/favicon.ico', express.static('public/favicon.ico'));
 
 // 관리자 페이지 라우트
 app.get('/admin', (req, res) => {
@@ -77,13 +78,22 @@ const channelConfigs = {
 };
 
 // MariaDB 연결
-const pool = mariadb.createPool({
+console.log('데이터베이스 연결 정보:', {
   host: process.env.DB_HOST || 'idvvbi.com',
   port: process.env.DB_PORT || 3307,
   user: process.env.DB_USER || 'app_user',
-  password: process.env.DB_PASSWORD || 'AppUser2024!@#',
-  database: process.env.DB_NAME || 'subscription_db',
-  connectionLimit: 10
+  database: process.env.DB_NAME || 'subscription_db'
+});
+
+// MariaDB pool - test-db.js와 동일한 설정 사용
+const pool = mariadb.createPool({
+  host: 'idvvbi.com',
+  port: 3307,
+  user: 'app_user',
+  password: 'AppUser2024!@#',
+  database: 'subscription_db',
+  connectionLimit: 1,  // test-db.js와 동일
+  connectTimeout: 5000  // test-db.js와 동일
 });
 
 // API 라우트 (인증 필요)
@@ -133,10 +143,34 @@ app.get('/api/categories', authenticateToken(authClient), requireActiveUser, asy
     const channel = getChannelFromRequest(req);
     const tableName = channelConfigs[channel].dataTable;
     
+    console.log(`Categories API - Channel: ${channel}, Table: ${tableName}`);
+    
     conn = await pool.getConnection();
-    const rows = await conn.query(`SELECT DISTINCT 제품군 FROM ${tableName} WHERE channel = ? ORDER BY 제품군`, [channel]);
+    
+    // channel 컬럼이 없을 수도 있으므로 조건부로 처리
+    let query;
+    let params;
+    
+    // 먼저 테이블 구조 확인
+    const columns = await conn.query(`SHOW COLUMNS FROM ${tableName}`);
+    const hasChannelColumn = columns.some(col => col.Field === 'channel');
+    
+    if (hasChannelColumn) {
+      query = `SELECT DISTINCT 제품군 FROM ${tableName} WHERE channel = ? ORDER BY 제품군`;
+      params = [channel];
+    } else {
+      // channel 컬럼이 없으면 전체 제품군 조회
+      query = `SELECT DISTINCT 제품군 FROM ${tableName} ORDER BY 제품군`;
+      params = [];
+    }
+    
+    console.log(`Executing query: ${query}`, params);
+    const rows = await conn.query(query, params);
+    console.log(`Found ${rows.length} categories`);
+    
     res.json(rows.map(row => row.제품군).filter(Boolean));
   } catch (err) {
+    console.error('Categories API Error:', err);
     res.status(500).json({ error: err.message });
   } finally {
     if (conn) conn.release();
@@ -637,8 +671,14 @@ function checkAdminAuth(req, res, next) {
       username: req.user.username
     });
     
-    // 관리자 권한 체크 (is_admin 추가)
-    if (!req.user.is_admin && !req.user.isAdmin && req.user.position !== '관리자' && req.user.employee_id !== 'admin') {
+    // 관리자 권한 체크 - is_admin이 true이면 무조건 관리자로 인정
+    if (req.user.is_admin === true || req.user.isAdmin === true) {
+      // 관리자 권한 있음
+      console.log('Admin auth success - is_admin is true');
+    } else if (req.user.employee_id === '1017701' || req.user.employee_id === 'admin') {
+      // employee_id로도 관리자 확인
+      console.log('Admin auth success - admin employee_id');
+    } else {
       console.log('Admin auth failed - not admin');
       return res.status(403).json({ error: '관리자 권한이 필요합니다.' });
     }

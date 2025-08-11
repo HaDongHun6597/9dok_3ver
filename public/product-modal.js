@@ -520,3 +520,6 @@ class ProductSelectionModal {
         }
     }
 }
+
+// 전역 스코프에 클래스 노출
+window.ProductSelectionModal = ProductSelectionModal;
