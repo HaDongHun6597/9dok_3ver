@@ -454,32 +454,53 @@ app.get('/api/user-info', async (req, res) => {
       console.log('토큰 추출됨:', token ? token.substring(0, 20) + '...' : '없음');
       
       try {
-        // authClient를 사용하여 토큰 검증
+        // 먼저 인증 서버에서 실제 사용자 정보를 가져오기 시도
+        try {
+          const currentUser = await authClient.getCurrentUser(token);
+          console.log('인증 서버에서 가져온 사용자 정보:', currentUser);
+          
+          if (currentUser) {
+            userInfo.name = currentUser.username || currentUser.name || currentUser.employee_id || '사용자';
+            userInfo.position = currentUser.position || currentUser.team || '';
+            userInfo.branch = currentUser.branch || '';
+            userInfo.company = currentUser.company || 'KTCS';
+            
+            console.log('인증 서버 정보로 업데이트:', userInfo);
+            res.json(userInfo);
+            return;
+          }
+        } catch (authServerErr) {
+          console.log('인증 서버 조회 실패, 토큰 검증 시도:', authServerErr.message);
+        }
+        
+        // 인증 서버 실패 시 로컬 토큰 검증
         const result = authClient.verifyToken(token);
         console.log('토큰 검증 결과:', result);
         
         if (result && result.success && result.user) {
           const user = result.user;
-          userInfo.name = user.username || user.name || user.employee_id || '사용자';
-          userInfo.position = user.position || user.team || '';
-          userInfo.branch = user.branch || '';
-          userInfo.company = user.company || 'KTCS';
+          
+          // mock 토큰이 아닌 경우에만 실제 데이터 사용
+          if (!token.startsWith('mock-access-token-')) {
+            // 실제 토큰에서 정보 추출
+            userInfo.name = user.username || user.name || user.employee_id || '사용자';
+            userInfo.position = user.position || user.team || '';
+            userInfo.branch = user.branch || '';
+            userInfo.company = user.company || 'KTCS';
+          } else {
+            // mock 토큰인 경우 기본값 유지하되 로그만 남김
+            console.log('Mock 토큰 감지, 실제 사용자 정보 사용 불가');
+            userInfo.name = '테스트 사용자';
+          }
           
           console.log('추출된 사용자 정보:', userInfo);
-        } else if (result && result.user) {
-          // success 플래그가 없어도 user 객체가 있으면 사용
-          const user = result.user;
-          userInfo.name = user.username || user.name || user.employee_id || '사용자';
-          userInfo.position = user.position || user.team || '';
-          userInfo.branch = user.branch || '';
-          userInfo.company = user.company || 'KTCS';
         } else {
           // 직접 JWT 디코드 시도 (검증 없이)
           const jwt = require('jsonwebtoken');
           const decoded = jwt.decode(token);
           console.log('JWT 디코드 결과:', decoded);
           
-          if (decoded) {
+          if (decoded && !token.startsWith('mock-')) {
             userInfo.name = decoded.username || decoded.name || decoded.employee_id || decoded.sub || '사용자';
             userInfo.position = decoded.position || decoded.team || '';
             userInfo.branch = decoded.branch || '';
@@ -493,7 +514,7 @@ app.get('/api/user-info', async (req, res) => {
         try {
           const jwt = require('jsonwebtoken');
           const decoded = jwt.decode(token);
-          if (decoded) {
+          if (decoded && !token.startsWith('mock-')) {
             userInfo.name = decoded.username || decoded.name || decoded.employee_id || decoded.sub || '사용자';
             userInfo.position = decoded.position || decoded.team || '';
             userInfo.branch = decoded.branch || '';
