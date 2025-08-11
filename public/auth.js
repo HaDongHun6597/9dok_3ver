@@ -184,7 +184,7 @@ class AuthClient {
   async logout() {
     if (this.accessToken) {
       try {
-        await fetch(`${this.authServerUrl}/logout`, {
+        await fetch(`${this.authServerUrl}/auth/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${this.accessToken}`
