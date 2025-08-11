@@ -382,11 +382,11 @@ class SubscriptionCalculator {
             pricingHTML += `
                 <div class="price-item discount promotion-period">
                     <span class="price-label">월 카드혜택 (${periodInfo.promotionPeriod}개월간)</span>
-                    <span class="price-value discount-value">-${this.formatPrice(Math.min(partnerCard.promotionDiscount, monthlyFee))}</span>
+                    <span class="price-value discount-value" style="color: #666;">-${this.formatPrice(Math.min(partnerCard.promotionDiscount, monthlyFee))}</span>
                 </div>
                 <div class="price-item final-price promotion-final">
                     <span class="price-label">월 혜택가격 (${periodInfo.promotionPeriod}개월간)</span>
-                    <span class="price-value final-value">${this.formatPrice(Math.max(0, monthlyFee - partnerCard.promotionDiscount))}</span>
+                    <span class="price-value final-value" style="color: #A50034;">${this.formatPrice(Math.max(0, monthlyFee - partnerCard.promotionDiscount))}</span>
                 </div>
             `;
         }
@@ -401,11 +401,11 @@ class SubscriptionCalculator {
             pricingHTML += `
                 <div class="price-item discount basic-period">
                     <span class="price-label">월 카드혜택 (${periodLabel})</span>
-                    <span class="price-value discount-value">-${this.formatPrice(Math.min(partnerCard.basicDiscount, monthlyFee))}</span>
+                    <span class="price-value discount-value" style="color: #666;">-${this.formatPrice(Math.min(partnerCard.basicDiscount, monthlyFee))}</span>
                 </div>
                 <div class="price-item final-price basic-final">
                     <span class="price-label">월 혜택가격 (${periodLabel})</span>
-                    <span class="price-value final-value">${this.formatPrice(Math.max(0, monthlyFee - partnerCard.basicDiscount))}</span>
+                    <span class="price-value final-value" style="color: #A50034;">${this.formatPrice(Math.max(0, monthlyFee - partnerCard.basicDiscount))}</span>
                 </div>
             `;
         }
