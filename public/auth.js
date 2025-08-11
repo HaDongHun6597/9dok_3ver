@@ -289,7 +289,7 @@ const authClient = new AuthClient();
 // 채널 접근 권한 제어 함수
 function applyChannelRestrictions(user) {
   console.log('[applyChannelRestrictions] 채널 제한 적용 시작');
-  console.log('[applyChannelRestrictions] 사용자 유통:', user.distribution || '없음 (전체 접근 가능)');
+  console.log('[applyChannelRestrictions] 사용자 채널:', user.user_channel || '없음 (전체 접근 가능)');
   
   // 채널 매핑: distribution 값과 채널 요소 ID
   const channelMap = {
@@ -298,12 +298,12 @@ function applyChannelRestrictions(user) {
     '전자랜드': 'channel-et'
   };
   
-  // 유통 정보 가져오기 (없으면 빈 문자열)
-  const distribution = user.distribution ? user.distribution.trim() : '';
+  // 채널 정보 가져오기 (없으면 빈 문자열)
+  const userChannel = user.user_channel ? user.user_channel.trim() : '';
   
-  // 유통 정보가 없으면 모든 채널 접근 가능
-  if (!distribution) {
-    console.log('[applyChannelRestrictions] 유통 정보 없음 - 모든 채널 활성화');
+  // 채널 정보가 없으면 모든 채널 접근 가능
+  if (!userChannel) {
+    console.log('[applyChannelRestrictions] 채널 정보 없음 - 모든 채널 활성화');
     Object.values(channelMap).forEach(id => {
       const channelElement = document.getElementById(id);
       if (channelElement) {
@@ -316,12 +316,12 @@ function applyChannelRestrictions(user) {
     return;
   }
   
-  // 특정 유통만 접근 가능한 경우
-  console.log('[applyChannelRestrictions] 특정 채널만 활성화:', distribution);
+  // 특정 채널만 접근 가능한 경우
+  console.log('[applyChannelRestrictions] 특정 채널만 활성화:', userChannel);
   Object.entries(channelMap).forEach(([channelName, elementId]) => {
     const channelElement = document.getElementById(elementId);
     if (channelElement) {
-      if (distribution === channelName) {
+      if (userChannel === channelName) {
         // 해당 채널만 활성화
         channelElement.style.opacity = '1';
         channelElement.style.pointerEvents = 'auto';
@@ -339,11 +339,11 @@ function applyChannelRestrictions(user) {
     }
   });
   
-  // 유통 정보가 있는 경우 안내 메시지 업데이트
-  if (distribution) {
+  // 채널 정보가 있는 경우 안내 메시지 업데이트
+  if (userChannel) {
     const subtitle = document.getElementById('subtitle');
     if (subtitle) {
-      subtitle.textContent = `${distribution} 채널만 이용 가능합니다`;
+      subtitle.textContent = `${userChannel} 채널만 이용 가능합니다`;
     }
   }
 }
@@ -352,15 +352,15 @@ function applyChannelRestrictions(user) {
 function checkChannelAccess(user) {
   console.log('[checkChannelAccess] 채널 접근 권한 확인');
   
-  const distribution = user.distribution ? user.distribution.trim() : '';
+  const userChannel = user.user_channel ? user.user_channel.trim() : '';
   const pathname = window.location.pathname;
   
-  console.log('[checkChannelAccess] 사용자 유통:', distribution || '없음 (전체 접근 가능)');
+  console.log('[checkChannelAccess] 사용자 채널:', userChannel || '없음 (전체 접근 가능)');
   console.log('[checkChannelAccess] 현재 경로:', pathname);
   
-  // 유통 정보가 없으면 모든 채널 접근 가능
-  if (!distribution) {
-    console.log('[checkChannelAccess] 유통 정보 없음 - 모든 채널 접근 허용');
+  // 채널 정보가 없으면 모든 채널 접근 가능
+  if (!userChannel) {
+    console.log('[checkChannelAccess] 채널 정보 없음 - 모든 채널 접근 허용');
     return true;
   }
   
@@ -375,9 +375,9 @@ function checkChannelAccess(user) {
   for (const [channelName, route] of Object.entries(channelRoutes)) {
     if (pathname.startsWith(route)) {
       // 접근 권한이 없는 경우
-      if (distribution !== channelName) {
-        console.log(`[checkChannelAccess] 접근 거부: ${channelName} 채널 (사용자는 ${distribution}만 가능)`);
-        alert(`${channelName} 채널에 접근 권한이 없습니다.\n${distribution} 채널만 이용 가능합니다.`);
+      if (userChannel !== channelName) {
+        console.log(`[checkChannelAccess] 접근 거부: ${channelName} 채널 (사용자는 ${userChannel}만 가능)`);
+        alert(`${channelName} 채널에 접근 권한이 없습니다.\n${userChannel} 채널만 이용 가능합니다.`);
         window.location.href = '/';
         return false;
       }

@@ -79,12 +79,12 @@ function validateChannelAccess(req, res, next) {
         return next();
     }
     
-    // 사용자의 distribution 정보 가져오기
-    const userDistribution = req.user.distribution ? req.user.distribution.trim() : '';
+    // 사용자의 user_channel 정보 가져오기
+    const userChannel = req.user.user_channel ? req.user.user_channel.trim() : '';
     
-    // distribution이 없으면 모든 채널 접근 가능
-    if (!userDistribution) {
-        console.log('[validateChannelAccess] 유통 정보 없음 - 모든 채널 접근 허용');
+    // user_channel이 없으면 모든 채널 접근 가능
+    if (!userChannel) {
+        console.log('[validateChannelAccess] 채널 정보 없음 - 모든 채널 접근 허용');
         return next();
     }
     
@@ -100,13 +100,13 @@ function validateChannelAccess(req, res, next) {
     
     const requestedChannelName = channelNames[requestedChannel];
     
-    console.log('[validateChannelAccess] 사용자 유통:', userDistribution, '/ 요청 채널:', requestedChannelName);
+    console.log('[validateChannelAccess] 사용자 채널:', userChannel, '/ 요청 채널:', requestedChannelName);
     
     // 채널 접근 권한 검증 (한글 이름으로 비교)
-    if (userDistribution !== requestedChannelName) {
-        console.log(`[validateChannelAccess] 접근 거부: ${requestedChannelName} 채널 (사용자는 ${userDistribution}만 가능)`);
+    if (userChannel !== requestedChannelName) {
+        console.log(`[validateChannelAccess] 접근 거부: ${requestedChannelName} 채널 (사용자는 ${userChannel}만 가능)`);
         return res.status(403).json({ 
-            error: `${requestedChannelName} 채널에 접근 권한이 없습니다. ${userDistribution} 채널만 이용 가능합니다.`
+            error: `${requestedChannelName} 채널에 접근 권한이 없습니다. ${userChannel} 채널만 이용 가능합니다.`
         });
     }
     
@@ -223,7 +223,7 @@ app.get('/api/categories', async (req, res) => {
   }
   
   // 채널 접근 권한 검증
-  const userDistribution = req.user.distribution ? req.user.distribution.trim() : '';
+  const userChannel = req.user.user_channel ? req.user.user_channel.trim() : '';
   const requestedChannel = getChannelFromRequest(req);
   
   // 채널 이름 매핑
@@ -235,9 +235,9 @@ app.get('/api/categories', async (req, res) => {
   
   const requestedChannelName = channelNames[requestedChannel];
   
-  // distribution이 있고 요청된 채널과 다르면 접근 거부
-  if (userDistribution && userDistribution !== requestedChannelName) {
-    console.log(`[categories] 채널 접근 거부: ${requestedChannelName} (사용자: ${userDistribution})`);
+  // user_channel이 있고 요청된 채널과 다르면 접근 거부
+  if (userChannel && userChannel !== requestedChannelName) {
+    console.log(`[categories] 채널 접근 거부: ${requestedChannelName} (사용자: ${userChannel})`);
     return res.status(403).json({ 
       error: `${requestedChannelName} 채널에 접근 권한이 없습니다.`
     });
