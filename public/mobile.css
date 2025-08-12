@@ -201,6 +201,36 @@
         background: #f5f5f5 !important;
     }
     
+    /* 모바일 총혜택보기 토글 */
+    .mobile-total-toggle {
+        position: fixed !important;
+        bottom: 70px !important;
+        right: 15px !important;
+        background: white !important;
+        border: 1px solid #ddd !important;
+        border-radius: 25px !important;
+        padding: 8px 15px !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15) !important;
+        z-index: 999 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        font-size: 13px !important;
+        color: #333 !important;
+    }
+    
+    .mobile-total-toggle input[type="checkbox"] {
+        margin: 0 !important;
+    }
+    
+    .mobile-total-toggle label {
+        margin: 0 !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+    }
+    
     /* 모달 모바일 최적화 */
     .modal-content {
         width: 90vw !important;
@@ -217,6 +247,8 @@
         width: 95vw !important;
         max-height: 85vh !important;
         margin: 7.5vh auto !important;
+        border: none !important;
+        overflow: hidden !important;
     }
     
     /* 구독혜택 그리드 모바일 최적화 */
@@ -224,15 +256,20 @@
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 10px !important;
-        padding: 15px !important;
-        max-height: 60vh !important;
+        padding: 0 10px 10px 10px !important;
+        max-height: calc(85vh - 60px) !important;
         overflow-y: auto !important;
+        justify-items: center !important;
+        align-items: center !important;
     }
     
     /* 구독혜택 아이템 모바일 스타일 */
     .benefit-item {
-        padding: 8px 5px !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 160px !important;
         min-height: 140px !important;
+        height: 140px !important;
         font-size: 13px !important;
         display: flex !important;
         flex-direction: column !important;
@@ -240,28 +277,12 @@
         justify-content: center !important;
         text-align: center !important;
         border-radius: 12px !important;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border: none !important;
+        background: white !important;
+        border: 1px solid #ddd !important;
         cursor: pointer !important;
         transition: all 0.3s !important;
-        box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3) !important;
         position: relative !important;
         overflow: hidden !important;
-    }
-    
-    .benefit-item:nth-child(2n) {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
-        box-shadow: 0 4px 10px rgba(240, 147, 251, 0.3) !important;
-    }
-    
-    .benefit-item:nth-child(3n) {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
-        box-shadow: 0 4px 10px rgba(79, 172, 254, 0.3) !important;
-    }
-    
-    .benefit-item:nth-child(4n) {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
-        box-shadow: 0 4px 10px rgba(67, 233, 123, 0.3) !important;
     }
     
     .benefit-item:active {
@@ -270,23 +291,33 @@
     }
     
     .benefit-item img {
-        width: 100px !important;
-        height: 100px !important;
-        margin-bottom: 5px !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 110px !important;
+        max-height: 110px !important;
         object-fit: contain !important;
-        max-width: 95% !important;
-        filter: brightness(0) invert(1) !important;
-        opacity: 0.95 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
     }
     
     .benefit-name {
-        font-size: 12px !important;
-        font-weight: 700 !important;
-        line-height: 1.2 !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        line-height: 1.1 !important;
         word-break: keep-all !important;
-        margin-top: auto !important;
-        color: white !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+        color: #333 !important;
+        margin: 0 !important;
+        padding: 3px 5px !important;
+        position: absolute !important;
+        bottom: 5px !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        z-index: 1 !important;
     }
     
     .modal-header {
@@ -309,9 +340,20 @@
     }
     
     /* 구독혜택 모달 헤더 특별 처리 */
+    .benefits-modal-content .modal-header {
+        background: #dc3545 !important;
+        border-radius: 10px 10px 0 0 !important;
+        border: none !important;
+    }
+    
     .benefits-modal-content .modal-header h2 {
         display: block !important;
         visibility: visible !important;
+        color: white !important;
+    }
+    
+    .benefits-modal-content .modal-header .close-btn {
+        color: white !important;
     }
     
     .modal-header .close-btn {
@@ -325,15 +367,21 @@
     }
     
     /* 모달 바디 모바일 스타일 */
-    .modal-body {
-        padding: 15px !important;
+    .benefits-modal-content .modal-body {
+        padding: 0 !important;
         overflow-y: auto !important;
     }
     
-    .modal-body > p {
+    .benefits-modal-content .modal-body > p {
         font-size: 13px !important;
-        margin-bottom: 15px !important;
+        margin: 15px 15px 10px 15px !important;
         color: #666 !important;
+    }
+    
+    /* 일반 모달 바디는 여백 유지 */
+    .modal-body {
+        padding: 20px !important;
+        overflow-y: auto !important;
     }
     
     .step-indicator {

@@ -98,6 +98,14 @@
         <div class="watermark-signature">designed by 하동훈</div>
     </div>
     
+    <!-- 모바일 총혜택보기 토글 -->
+    <div class="mobile-total-toggle" style="display: none;" id="mobileTotalToggle">
+        <label>
+            <input type="checkbox" id="mobileShowTotalCost" onchange="document.getElementById('showTotalCost').checked = this.checked; document.getElementById('showTotalCost').dispatchEvent(new Event('change'));">
+            <span>총혜택 보기</span>
+        </label>
+    </div>
+    
     <!-- 모바일 하단 혜택 패널 -->
     <div id="mobile-benefit-panel" class="mobile-benefit-panel collapsed" style="display: none;">
         <div class="mobile-benefit-header" onclick="toggleBenefitPanel()">
@@ -403,15 +411,18 @@
     function updateMobileUI() {
         const isMobile = window.innerWidth <= 768;
         const benefitPanel = document.getElementById('mobile-benefit-panel');
+        const totalToggle = document.getElementById('mobileTotalToggle');
         const container = document.getElementById('mobile-buttons-container');
         
         if (isMobile) {
-            // 모바일: 패널 표시
+            // 모바일: 패널과 토글 표시
             if (benefitPanel) benefitPanel.style.display = 'block';
+            if (totalToggle) totalToggle.style.display = 'flex';
             // createMobileButtons(); // 제거됨
         } else {
             // 데스크톱: 모바일 요소들 숨김
             if (benefitPanel) benefitPanel.style.display = 'none';
+            if (totalToggle) totalToggle.style.display = 'none';
             if (container) container.remove();
         }
     }

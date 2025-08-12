@@ -1189,7 +1189,7 @@ class SubscriptionCalculator {
                 <div class="modal-header" style="background: linear-gradient(135deg, #A50034, #8A002A);">
                     <h2 style="margin: 0; color: white;">${title}</h2>
                 </div>
-                <div class="modal-body" style="padding: 20px; white-space: pre-line; font-size: 14px; line-height: 1.6;">
+                <div class="modal-body" style="padding: 20px 30px; white-space: pre-line; font-size: 14px; line-height: 1.6;">
                     ${message}
                 </div>
                 <div class="modal-footer">
@@ -1217,7 +1217,7 @@ class SubscriptionCalculator {
                 <div class="modal-header" style="background: linear-gradient(135deg, #ff5252, #d32f2f);">
                     <h2 style="margin: 0; color: white;">${title}</h2>
                 </div>
-                <div class="modal-body" style="padding: 20px; white-space: pre-line; font-size: 14px; line-height: 1.6;">
+                <div class="modal-body" style="padding: 20px 30px; white-space: pre-line; font-size: 14px; line-height: 1.6;">
                     ${message}
                 </div>
                 <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
