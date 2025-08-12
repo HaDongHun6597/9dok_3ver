@@ -23,7 +23,9 @@
       "Bash(cat:*)",
       "Bash(nslookup:*)",
       "Bash(docker logs:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(cp:*)",
+      "Bash(git restore:*)"
     ],
     "deny": []
   }

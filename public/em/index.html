@@ -509,6 +509,7 @@
                 let totalBenefits = 0;
                 let actualTotalPayment = 0;
                 let maxContractMonths = 0;
+                let totalMyPointForContract = 0;
                 
                 window.calculator.selectedProducts.forEach(product => {
                     const monthlyFee = window.calculator.parsePrice(product['월요금']);
@@ -541,18 +542,69 @@
                     const combinationDiscount = window.calculator.parsePrice(product['할인금액']) || 0;
                     const totalCombinationBenefit = combinationDiscount * contractMonths;
                     
+                    // 신한 마이포인트 계산 (계약기간 전체)
+                    if (product.partnerCard && product.partnerCard.cardName) {
+                        const cardName = product.partnerCard.cardName;
+                        
+                        // 제휴카드 할인 고려한 최종 월요금
+                        const periodInfo = window.calculator.calculatePeriodBasedDiscount(contractPeriod, product.partnerCard);
+                        let monthlyCardDiscount = 0;
+                        
+                        // 현재 시점의 카드 할인 (프로모션 기간 우선, 없으면 기본 혜택)
+                        if (periodInfo.promotionPeriod > 0) {
+                            monthlyCardDiscount = Math.min(product.partnerCard.promotionDiscount, monthlyFee);
+                        } else if (periodInfo.basicPeriod > 0) {
+                            monthlyCardDiscount = Math.min(product.partnerCard.basicDiscount, monthlyFee);
+                        }
+                        
+                        const productFinalPrice = monthlyFee - monthlyCardDiscount - combinationDiscount - activationDiscount;
+                        
+                        // 신한카드 70만원/130만원 이상 && 월 7만원 이상일 때 월 10,000 포인트
+                        if (cardName.includes('신한') && 
+                            (cardName.includes('70만원 이상') || cardName.includes('130만원 이상'))) {
+                            if (productFinalPrice >= 70000) {
+                                // 계약기간 동안 매월 10,000 포인트 지급
+                                totalMyPointForContract += 10000 * contractMonths;
+                            }
+                        }
+                    }
+                    
                     const productTotalBenefit = totalCardBenefit + totalActivationBenefit + totalCombinationBenefit;
                     const productActualCost = totalMonthlyFee - productTotalBenefit;
                     
                     totalContractCost += totalMonthlyFee;
-                    totalBenefits += productTotalBenefit;
-                    actualTotalPayment += productActualCost;
+                    totalBenefits += productTotalBenefit + totalMyPointForContract;
+                    actualTotalPayment += productActualCost - totalMyPointForContract;
                 });
                 
                 // 모바일 총 비용 섹션 업데이트
                 document.getElementById('mobile-contract-period').textContent = maxContractMonths ? `${maxContractMonths}개월` : '-';
                 document.getElementById('mobile-total-original').textContent = totalContractCost > 0 ? `${totalContractCost.toLocaleString()}원` : '0원';
                 document.getElementById('mobile-total-benefits').textContent = totalBenefits > 0 ? `-${totalBenefits.toLocaleString()}원` : '-0원';
+                
+                // 신한 마이포인트 표시 추가/제거
+                const myPointRow = document.getElementById('mobile-mypoint-row');
+                if (totalMyPointForContract > 0) {
+                    if (!myPointRow) {
+                        // 마이포인트 행 추가
+                        const benefitsRow = document.querySelector('#mobile-total-benefits').parentElement;
+                        const newRow = document.createElement('div');
+                        newRow.id = 'mobile-mypoint-row';
+                        newRow.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;';
+                        newRow.innerHTML = `
+                            <span style="font-size: 13px; color: #0066cc;">신한 마이포인트:</span>
+                            <span id="mobile-mypoint-amount" style="font-size: 13px; color: #0066cc; font-weight: 600;">${totalMyPointForContract.toLocaleString()}원 지급</span>
+                        `;
+                        benefitsRow.parentElement.insertBefore(newRow, benefitsRow.nextSibling);
+                    } else {
+                        // 기존 마이포인트 값 업데이트
+                        document.getElementById('mobile-mypoint-amount').textContent = `${totalMyPointForContract.toLocaleString()}원 지급`;
+                    }
+                } else if (myPointRow) {
+                    // 마이포인트가 없으면 행 제거
+                    myPointRow.remove();
+                }
+                
                 document.getElementById('mobile-total-cost').textContent = actualTotalPayment > 0 ? `${actualTotalPayment.toLocaleString()}원` : '0원';
             }
             
