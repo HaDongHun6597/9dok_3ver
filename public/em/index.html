@@ -269,9 +269,10 @@
     <script src="../product-modal.js"></script>
     <script src="../script.js"></script>
     
-    <!-- 모바일 3개 버튼 생성 스크립트 -->
+    <!-- 모바일 UI 스크립트 -->
     <script>
-    function createMobileButtons() {
+    // createMobileButtons 함수 제거 - 더 이상 필요없음
+    /*function createMobileButtons() {
         // 이미 버튼이 있으면 생성하지 않음
         if (document.getElementById('mobile-buttons-container')) return;
         
@@ -380,7 +381,7 @@
         
         // 헤더 컨텐츠에 추가
         headerContent.appendChild(buttonsContainer);
-    }
+    }*/
     
     // 하단 혜택 패널 토글 함수
     function toggleBenefitPanel() {
@@ -405,9 +406,9 @@
         const container = document.getElementById('mobile-buttons-container');
         
         if (isMobile) {
-            // 모바일: 버튼과 패널 표시
+            // 모바일: 패널 표시
             if (benefitPanel) benefitPanel.style.display = 'block';
-            createMobileButtons();
+            // createMobileButtons(); // 제거됨
         } else {
             // 데스크톱: 모바일 요소들 숨김
             if (benefitPanel) benefitPanel.style.display = 'none';
@@ -415,14 +416,101 @@
         }
     }
     
+    // 모바일에서 user-info-container 위치 조정 (전역 함수로 이동)
+    function adjustUserInfoPosition() {
+            const container = document.getElementById('user-info-container');
+            if (!container) return;
+            
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // 모바일: 헤더로 이동
+                container.style.position = '';
+                container.style.top = '';
+                container.style.right = '';
+                container.style.zIndex = '';
+                
+                const headerContent = document.querySelector('.header-content');
+                if (headerContent && !headerContent.contains(container)) {
+                    headerContent.appendChild(container);
+                }
+                
+                // 구독혜택 버튼 추가 (모바일에서만)
+                const backToMain = container.querySelector('.back-to-main');
+                if (backToMain && !container.querySelector('.mobile-benefits-btn')) {
+                    const benefitsBtn = document.createElement('a');
+                    benefitsBtn.className = 'mobile-benefits-btn';
+                    benefitsBtn.href = '#';
+                    benefitsBtn.style.cssText = 'text-decoration: none; color: #666; font-size: 12px; display: flex; align-items: center; gap: 5px; padding: 6px 10px; background: white; border-radius: 6px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #ddd; height: 32px; box-sizing: border-box; white-space: nowrap;';
+                    benefitsBtn.innerHTML = '<span style="font-size: 16px;">🎁</span> 구독혜택';
+                    
+                    benefitsBtn.onclick = (e) => {
+                        e.preventDefault();
+                        const desktopBtn = document.querySelector('.subscription-benefits-btn');
+                        if (desktopBtn) desktopBtn.click();
+                    };
+                    
+                    benefitsBtn.onmouseover = function() {
+                        this.style.background = '#f5f5f5';
+                        this.style.color = '#333';
+                    };
+                    benefitsBtn.onmouseout = function() {
+                        this.style.background = 'white';
+                        this.style.color = '#666';
+                    };
+                    
+                    container.insertBefore(benefitsBtn, backToMain);
+                }
+            } else {
+                // PC: 원래 위치로 복원
+                container.style.position = 'fixed';
+                container.style.top = '25px';
+                container.style.right = '30px';
+                container.style.zIndex = '1000';
+                
+                // body로 다시 이동
+                if (!document.body.contains(container) || container.parentElement !== document.body) {
+                    document.body.appendChild(container);
+                }
+                
+                // 모바일 구독혜택 버튼 제거
+                const mobileBenefitsBtn = container.querySelector('.mobile-benefits-btn');
+                if (mobileBenefitsBtn) {
+                    mobileBenefitsBtn.remove();
+                }
+        }
+    }
+    
     // DOM 로드 후 실행
     document.addEventListener('DOMContentLoaded', () => {
-        createMobileButtons();
+        // createMobileButtons(); // 제거됨
         updateMobileUI();
+        
+        // MutationObserver로 user-info-container 생성 감지
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.id === 'user-info-container') {
+                        adjustUserInfoPosition();
+                    }
+                });
+            });
+        });
+        
+        observer.observe(document.body, { 
+            childList: true, 
+            subtree: true 
+        });
+        
+        // 이미 존재하는 경우 즉시 조정
+        adjustUserInfoPosition();
     });
     
     // 화면 크기 변경 시 다시 체크
-    window.addEventListener('resize', updateMobileUI);
+    window.addEventListener('resize', () => {
+        updateMobileUI();
+        adjustUserInfoPosition();
+    });
     
     // 전역 함수로 노출
     window.toggleBenefitPanel = toggleBenefitPanel;
