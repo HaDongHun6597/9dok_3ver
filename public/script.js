@@ -986,8 +986,8 @@ class SubscriptionCalculator {
             const productActualCost = totalMonthlyFee - productTotalBenefit;
             
             totalContractCost += totalMonthlyFee;
-            totalBenefits += productTotalBenefit + totalMyPointForContract;
-            actualTotalPayment += productActualCost - totalMyPointForContract;
+            totalBenefits += productTotalBenefit;
+            actualTotalPayment += productActualCost;
         });
         
         // 총금액 요약 섹션 업데이트 또는 생성
@@ -1018,10 +1018,13 @@ class SubscriptionCalculator {
             if (totalMyPointForContract > 0) {
                 myPointHTML = `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="color: #0066cc;">신한 마이포인트:</span>
-                    <span style="color: #0066cc; font-weight: 600;">${this.formatPrice(totalMyPointForContract)} 지급</span>
+                    <span style="color: #0066cc; font-weight: 500;">신한 마이포인트 (현금성):</span>
+                    <span style="color: #0066cc; font-weight: 600;">총 ${this.formatPrice(totalMyPointForContract)} 지급</span>
                 </div>`;
             }
+            
+            // 실 지불총액에서 마이포인트 차감
+            const finalPayment = actualTotalPayment - totalMyPointForContract;
             
             summaryEl.innerHTML = `
                 <div style="font-weight: bold; margin-bottom: 8px; color: #333;">전체 계약기간 총 비용</div>
@@ -1031,12 +1034,12 @@ class SubscriptionCalculator {
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                     <span style="color: #666;">총 혜택:</span>
-                    <span style="color: #333;">-${this.formatPrice(totalBenefits)}</span>
+                    <span style="color: #dc3545;">-${this.formatPrice(totalBenefits)}</span>
                 </div>
                 ${myPointHTML}
                 <div style="border-top: 1px solid #ddd; margin-top: 6px; padding-top: 6px; display: flex; justify-content: space-between;">
                     <span style="font-weight: bold; color: #333;">실 지불총액:</span>
-                    <span style="font-weight: bold; color: #333; font-size: 14px;">${this.formatPrice(actualTotalPayment)}</span>
+                    <span style="font-weight: bold; color: #1976d2; font-size: 14px;">${this.formatPrice(finalPayment)}</span>
                 </div>
             `;
             summaryEl.style.display = shouldShow ? 'block' : 'none';

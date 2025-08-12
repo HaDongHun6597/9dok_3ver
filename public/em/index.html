@@ -573,8 +573,8 @@
                     const productActualCost = totalMonthlyFee - productTotalBenefit;
                     
                     totalContractCost += totalMonthlyFee;
-                    totalBenefits += productTotalBenefit + totalMyPointForContract;
-                    actualTotalPayment += productActualCost - totalMyPointForContract;
+                    totalBenefits += productTotalBenefit;
+                    actualTotalPayment += productActualCost;
                 });
                 
                 // 모바일 총 비용 섹션 업데이트
@@ -592,20 +592,22 @@
                         newRow.id = 'mobile-mypoint-row';
                         newRow.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;';
                         newRow.innerHTML = `
-                            <span style="font-size: 13px; color: #0066cc;">신한 마이포인트:</span>
-                            <span id="mobile-mypoint-amount" style="font-size: 13px; color: #0066cc; font-weight: 600;">${totalMyPointForContract.toLocaleString()}원 지급</span>
+                            <span style="font-size: 13px; color: #0066cc; font-weight: 500;">신한 마이포인트 (현금성):</span>
+                            <span id="mobile-mypoint-amount" style="font-size: 13px; color: #0066cc; font-weight: 600;">총 ${totalMyPointForContract.toLocaleString()}원 지급</span>
                         `;
                         benefitsRow.parentElement.insertBefore(newRow, benefitsRow.nextSibling);
                     } else {
                         // 기존 마이포인트 값 업데이트
-                        document.getElementById('mobile-mypoint-amount').textContent = `${totalMyPointForContract.toLocaleString()}원 지급`;
+                        document.getElementById('mobile-mypoint-amount').textContent = `총 ${totalMyPointForContract.toLocaleString()}원 지급`;
                     }
                 } else if (myPointRow) {
                     // 마이포인트가 없으면 행 제거
                     myPointRow.remove();
                 }
                 
-                document.getElementById('mobile-total-cost').textContent = actualTotalPayment > 0 ? `${actualTotalPayment.toLocaleString()}원` : '0원';
+                // 실 지불총액에서 마이포인트 차감
+                const finalPayment = actualTotalPayment - totalMyPointForContract;
+                document.getElementById('mobile-total-cost').textContent = finalPayment > 0 ? `${finalPayment.toLocaleString()}원` : '0원';
             }
             
             mobileTotalSection.style.display = 'block';
