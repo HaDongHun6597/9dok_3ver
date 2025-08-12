@@ -712,6 +712,10 @@
         if (showTotalCost) {
             showTotalCost.addEventListener('change', () => {
                 console.log('PC 총혜택 체크박스 변경:', showTotalCost.checked);
+                // 제품 카드의 총 비용 섹션 표시/숨김
+                if (window.calculator) {
+                    window.calculator.toggleTotalCostDisplay(showTotalCost.checked);
+                }
                 if (window.innerWidth <= 768) {
                     // 모바일 체크박스도 동기화
                     if (mobileShowTotalCost) {
@@ -728,6 +732,10 @@
                 // PC 체크박스도 동기화
                 if (showTotalCost) {
                     showTotalCost.checked = mobileShowTotalCost.checked;
+                }
+                // 제품 카드의 총 비용 섹션 표시/숨김
+                if (window.calculator) {
+                    window.calculator.toggleTotalCostDisplay(mobileShowTotalCost.checked);
                 }
                 updateMobileBenefitPanel();
             });
