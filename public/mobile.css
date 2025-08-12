@@ -162,18 +162,28 @@
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        padding: 0 20px !important;
         font-size: 15px !important;
         font-weight: 600 !important;
-        color: #333 !important;
+        background: #2c2c2c !important;
+        color: white !important;
         cursor: pointer !important;
-        border-bottom: 1px solid #eee !important;
+        border: none !important;
     }
     
     .mobile-benefit-content {
         padding: 20px !important;
-        overflow-y: auto !important;
-        height: calc(300px - 60px) !important;
+        overflow-y: visible !important;
+        height: auto !important;
         display: none !important;
+        max-height: calc(100vh - 120px) !important;
+        overflow-y: auto !important;
+    }
+    
+    .mobile-benefit-panel.expanded {
+        height: auto !important;
+        max-height: 85vh !important;
+        overflow-y: auto !important;
     }
     
     .mobile-benefit-panel.expanded .mobile-benefit-content {
