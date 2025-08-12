@@ -351,11 +351,11 @@ class SubscriptionCalculator {
         // 활성화(프로모션 할인) 혜택 계산
         const activationDiscount = this.parsePrice(product['활성화']) || 0;
         const promotionMonths = parseInt(product['프로모션할인종료월'] || '0');
-        const totalActivationBenefit = activationDiscount * promotionMonths;
+        const actualPromotionMonths = promotionMonths > 0 ? promotionMonths : contractMonths;
+        const totalActivationBenefit = activationDiscount * actualPromotionMonths;
         
-        // 결합할인 혜택 계산
+        // 결합할인은 이미 월요금에 반영되어 있음
         const combinationDiscount = this.parsePrice(product['할인금액']) || 0;
-        const totalCombinationBenefit = combinationDiscount * contractMonths;
         
         // 신한 마이포인트 계산
         let totalMyPoint = 0;
@@ -384,11 +384,11 @@ class SubscriptionCalculator {
             }
         }
         
-        // 총 혜택금액
-        const totalBenefit = totalCardBenefit + totalActivationBenefit + totalCombinationBenefit;
+        // 총 혜택금액 = 카드혜택만 (프로모션할인과 결합할인은 이미 월구독료에 반영)
+        const totalBenefit = totalCardBenefit;
         
-        // 실제 지불 총액 (마이포인트 차감)
-        const actualTotalCost = totalMonthlyFee - totalBenefit - totalMyPoint;
+        // 실제 지불 총액 = 총 월구독료 - 총 카드혜택
+        const actualTotalCost = totalMonthlyFee - totalCardBenefit;
         
         return `
             <div class="total-cost-section" style="border-top: 2px solid #e0e0e0; margin-top: 15px; padding-top: 15px; clear: both; width: 100%; max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">
@@ -404,16 +404,6 @@ class SubscriptionCalculator {
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                         <span style="font-size: 12px; color: #666;">총 카드혜택:</span>
                         <span style="font-size: 12px; font-weight: bold; color: #666;">-${this.formatPrice(totalCardBenefit)}</span>
-                    </div>` : ''}
-                    ${totalActivationBenefit > 0 ? `
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-size: 12px; color: #666;">프로모션할인:</span>
-                        <span style="font-size: 12px; font-weight: bold; color: #666;">-${this.formatPrice(totalActivationBenefit)}</span>
-                    </div>` : ''}
-                    ${totalCombinationBenefit > 0 ? `
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-size: 12px; color: #666;">결합할인:</span>
-                        <span style="font-size: 12px; font-weight: bold; color: #666;">-${this.formatPrice(totalCombinationBenefit)}</span>
                     </div>` : ''}
                     <div style="border-top: 1px solid #ddd; margin-top: 8px; padding-top: 8px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
@@ -888,7 +878,7 @@ class SubscriptionCalculator {
         const partnerCardDetailEl = document.getElementById('partnerCardDetail');
         
         if (normalPriceEl) normalPriceEl.textContent = this.formatPrice(normalPrice);
-        if (promotionPriceEl) promotionPriceEl.textContent = this.formatPrice(promotionDiscount + partnerCardDiscount);
+        if (promotionPriceEl) promotionPriceEl.textContent = this.formatPrice(promotionDiscount + combinationDiscount + partnerCardDiscount);
         if (finalPriceEl) {
             finalPriceEl.textContent = this.formatPrice(total);
             
@@ -933,7 +923,6 @@ class SubscriptionCalculator {
         let totalContractCost = 0;
         let totalBenefits = 0;
         let actualTotalPayment = 0;
-        let totalMyPointForContract = 0;
         
         this.selectedProducts.forEach(product => {
             const monthlyFee = this.parsePrice(product['월요금']);
@@ -955,46 +944,27 @@ class SubscriptionCalculator {
                 }
             }
             
-            // 활성화 혜택
+            // 활성화 혜택 (프로모션할인)
             const activationDiscount = this.parsePrice(product['활성화']) || 0;
             const promotionMonths = parseInt(product['프로모션할인종료월'] || '0');
-            const totalActivationBenefit = activationDiscount * promotionMonths;
+            // 프로모션종료월이 0이면 계약기간 전체 적용
+            const actualPromotionMonths = promotionMonths > 0 ? promotionMonths : contractMonths;
+            const totalActivationBenefit = activationDiscount * actualPromotionMonths;
             
-            // 결합할인 혜택
+            // 결합할인 - 월요금에 이미 반영되어 있으므로 정가 복원용으로만 사용
             const combinationDiscount = this.parsePrice(product['할인금액']) || 0;
-            const totalCombinationBenefit = combinationDiscount * contractMonths;
             
-            // 신한 마이포인트 계산 (계약기간 전체)
-            if (product.partnerCard && (product.partnerCard.cardName || product.partnerCard.name)) {
-                const cardName = product.partnerCard.cardName || product.partnerCard.name;
-                
-                // 제휴카드 할인 고려한 최종 월요금
-                const periodInfo = this.calculatePeriodBasedDiscount(contractPeriod, product.partnerCard);
-                let monthlyCardDiscount = 0;
-                
-                // 현재 시점의 카드 할인 (프로모션 기간 우선, 없으면 기본 혜택)
-                if (periodInfo.promotionPeriod > 0) {
-                    monthlyCardDiscount = Math.min(product.partnerCard.promotionDiscount, monthlyFee);
-                } else if (periodInfo.basicPeriod > 0) {
-                    monthlyCardDiscount = Math.min(product.partnerCard.basicDiscount, monthlyFee);
-                }
-                
-                const productFinalPrice = monthlyFee - monthlyCardDiscount - combinationDiscount - activationDiscount;
-                
-                // 신한카드 70만원/130만원 이상 && 월 7만원 이상일 때 월 10,000 포인트
-                if (cardName.includes('신한') && 
-                    (cardName.includes('70만원 이상') || cardName.includes('130만원 이상'))) {
-                    if (productFinalPrice >= 70000) {
-                        // 계약기간 동안 매월 10,000 포인트 지급
-                        totalMyPointForContract += 10000 * contractMonths;
-                    }
-                }
-            }
+            // 신한 마이포인트는 별도 섹션에서 표시하므로 여기서는 계산하지 않음
             
-            const productTotalBenefit = totalCardBenefit + totalActivationBenefit + totalCombinationBenefit;
-            const productActualCost = totalMonthlyFee - productTotalBenefit;
+            // 정가는 할인 전 원래 가격 (월요금 + 활성화할인 + 결합할인) × 계약기간
+            const originalMonthlyFee = monthlyFee + activationDiscount + combinationDiscount;
+            const totalOriginalCost = originalMonthlyFee * contractMonths;
             
-            totalContractCost += totalMonthlyFee;
+            // 총 혜택 = 카드혜택만 (프로모션할인과 결합할인은 이미 월요금에 반영)
+            const productTotalBenefit = totalCardBenefit;
+            const productActualCost = totalMonthlyFee - totalCardBenefit;
+            
+            totalContractCost += totalOriginalCost;
             totalBenefits += productTotalBenefit;
             actualTotalPayment += productActualCost;
         });
@@ -1022,18 +992,8 @@ class SubscriptionCalculator {
         }
         
         if (this.selectedProducts.length > 0 && actualTotalPayment > 0) {
-            // 신한 마이포인트가 있는 경우 별도 표시
-            let myPointHTML = '';
-            if (totalMyPointForContract > 0) {
-                myPointHTML = `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span style="color: #0066cc; font-weight: 500;">신한 마이포인트 (현금성):</span>
-                    <span style="color: #0066cc; font-weight: 600;">총 ${this.formatPrice(totalMyPointForContract)} 지급</span>
-                </div>`;
-            }
-            
-            // 실 지불총액에서 마이포인트 차감
-            const finalPayment = actualTotalPayment - totalMyPointForContract;
+            // 마이포인트는 별도 섹션에서 표시하므로 여기서는 표시하지 않음
+            const finalPayment = actualTotalPayment;
             
             summaryEl.innerHTML = `
                 <div style="font-weight: bold; margin-bottom: 8px; color: #333;">전체 계약기간 총 비용</div>
@@ -1045,7 +1005,6 @@ class SubscriptionCalculator {
                     <span style="color: #666;">총 혜택:</span>
                     <span style="color: #dc3545;">-${this.formatPrice(totalBenefits)}</span>
                 </div>
-                ${myPointHTML}
                 <div style="border-top: 1px solid #ddd; margin-top: 6px; padding-top: 6px; display: flex; justify-content: space-between;">
                     <span style="font-weight: bold; color: #333;">실 지불총액:</span>
                     <span style="font-weight: bold; color: #1976d2; font-size: 14px;">${this.formatPrice(finalPayment)}</span>

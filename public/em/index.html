@@ -561,46 +561,27 @@
                         }
                     }
                     
-                    // 활성화 혜택
+                    // 활성화 혜택 (프로모션할인) - 이미 월요금에 반영됨
                     const activationDiscount = window.calculator.parsePrice(product['활성화']) || 0;
                     const promotionMonths = parseInt(product['프로모션할인종료월'] || '0');
-                    const totalActivationBenefit = activationDiscount * promotionMonths;
+                    const actualPromotionMonths = promotionMonths > 0 ? promotionMonths : contractMonths;
+                    const totalActivationBenefit = activationDiscount * actualPromotionMonths;
                     
-                    // 결합할인 혜택
+                    // 결합할인 - 이미 월요금에 반영됨
                     const combinationDiscount = window.calculator.parsePrice(product['할인금액']) || 0;
                     const totalCombinationBenefit = combinationDiscount * contractMonths;
                     
-                    // 신한 마이포인트 계산 (계약기간 전체)
-                    if (product.partnerCard && product.partnerCard.cardName) {
-                        const cardName = product.partnerCard.cardName;
-                        
-                        // 제휴카드 할인 고려한 최종 월요금
-                        const periodInfo = window.calculator.calculatePeriodBasedDiscount(contractPeriod, product.partnerCard);
-                        let monthlyCardDiscount = 0;
-                        
-                        // 현재 시점의 카드 할인 (프로모션 기간 우선, 없으면 기본 혜택)
-                        if (periodInfo.promotionPeriod > 0) {
-                            monthlyCardDiscount = Math.min(product.partnerCard.promotionDiscount, monthlyFee);
-                        } else if (periodInfo.basicPeriod > 0) {
-                            monthlyCardDiscount = Math.min(product.partnerCard.basicDiscount, monthlyFee);
-                        }
-                        
-                        const productFinalPrice = monthlyFee - monthlyCardDiscount - combinationDiscount - activationDiscount;
-                        
-                        // 신한카드 70만원/130만원 이상 && 월 7만원 이상일 때 월 10,000 포인트
-                        if (cardName.includes('신한') && 
-                            (cardName.includes('70만원 이상') || cardName.includes('130만원 이상'))) {
-                            if (productFinalPrice >= 70000) {
-                                // 계약기간 동안 매월 10,000 포인트 지급
-                                totalMyPointForContract += 10000 * contractMonths;
-                            }
-                        }
-                    }
+                    // 신한 마이포인트는 별도 섹션에서 표시하므로 여기서는 계산하지 않음
                     
-                    const productTotalBenefit = totalCardBenefit + totalActivationBenefit + totalCombinationBenefit;
-                    const productActualCost = totalMonthlyFee - productTotalBenefit;
+                    // 정가는 할인 전 원래 가격 (월요금 + 활성화할인 + 결합할인) × 계약기간
+                    const originalMonthlyFee = monthlyFee + activationDiscount + combinationDiscount;
+                    const totalOriginalCost = originalMonthlyFee * contractMonths;
                     
-                    totalContractCost += totalMonthlyFee;
+                    // 총 혜택 = 카드혜택만 (프로모션할인과 결합할인은 이미 월요금에 반영)
+                    const productTotalBenefit = totalCardBenefit;
+                    const productActualCost = totalMonthlyFee - totalCardBenefit;
+                    
+                    totalContractCost += totalOriginalCost;
                     totalBenefits += productTotalBenefit;
                     actualTotalPayment += productActualCost;
                 });
