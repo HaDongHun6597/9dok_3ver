@@ -234,118 +234,43 @@
     <script src="../product-modal.js"></script>
     <script src="../script.js"></script>
     
+    <!-- 모바일 하단 혜택 패널 -->
+    <div id="mobile-benefit-panel" class="mobile-benefit-panel collapsed" style="display: none;">
+        <div class="mobile-benefit-header" onclick="toggleBenefitPanel()">
+            <span id="benefit-panel-text">가전 구독 혜택 ▲</span>
+        </div>
+        <div class="mobile-benefit-content">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h3 style="color: #333; font-size: 16px; margin: 0 0 10px 0;">🎁 가전 구독 혜택</h3>
+                <p style="color: #666; font-size: 12px; margin: 0;">월 구독료로 이용하는 다양한 혜택을 확인해보세요</p>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 20px; margin-bottom: 8px;">🛠️</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #333;">설치/철거 무료</div>
+                    <div style="font-size: 10px; color: #666; margin-top: 4px;">전문 기사 방문</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 20px; margin-bottom: 8px;">🔧</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #333;">A/S 무제한</div>
+                    <div style="font-size: 10px; color: #666; margin-top: 4px;">고장 시 즉시 수리</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 20px; margin-bottom: 8px;">🚚</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #333;">배송 무료</div>
+                    <div style="font-size: 10px; color: #666; margin-top: 4px;">설치까지 원스톱</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 20px; margin-bottom: 8px;">💰</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #333;">경제적</div>
+                    <div style="font-size: 10px; color: #666; margin-top: 4px;">월 소액으로 이용</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 모바일 UI 스크립트 -->
     <script>
-    // 모바일 버튼 생성 함수
-    function createMobileButtons() {
-        // 모바일이 아니면 실행하지 않음
-        if (window.innerWidth > 768) return;
-        
-        // 이미 생성되었으면 중복 생성 방지
-        if (document.getElementById('mobile-buttons-container')) return;
-        
-        const headerContent = document.querySelector('.header-content');
-        if (!headerContent) return;
-        
-        // 기존 데스크톱 버튼들 찾기
-        const benefitsBtn = document.querySelector('.subscription-benefits-btn');
-        const backBtn = document.querySelector('.back-to-main');
-        const userInfo = document.getElementById('user-info');
-        
-        // 3개 버튼을 담을 컨테이너 생성
-        const buttonsContainer = document.createElement('div');
-        buttonsContainer.id = 'mobile-buttons-container';
-        buttonsContainer.style.cssText = `
-            display: flex;
-            gap: 8px;
-            margin-top: 15px;
-            width: 100%;
-            justify-content: center;
-        `;
-        
-        // 1. 구독혜택 버튼 (기존 버튼 복사)
-        if (benefitsBtn) {
-            const mBenefitsBtn = benefitsBtn.cloneNode(true);
-            mBenefitsBtn.style.cssText = `
-                flex: 1;
-                max-width: 100px;
-                padding: 8px;
-                font-size: 12px;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 4px;
-                cursor: pointer;
-                transition: all 0.2s;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            `;
-            buttonsContainer.appendChild(mBenefitsBtn);
-        }
-        
-        // 2. 채널선택 버튼 (기존 버튼 복사)
-        if (backBtn) {
-            const mBackBtn = document.createElement('a');
-            mBackBtn.href = '/';
-            mBackBtn.style.cssText = `
-                flex: 1;
-                max-width: 100px;
-                padding: 8px;
-                font-size: 12px;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 4px;
-                cursor: pointer;
-                text-decoration: none;
-                color: #333;
-                transition: all 0.2s;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            `;
-            mBackBtn.innerHTML = `
-                <span style="font-size: 18px;">↔️</span>
-                <span>채널선택</span>
-            `;
-            buttonsContainer.appendChild(mBackBtn);
-        }
-        
-        // 3. 로그인정보 버튼
-        if (userInfo) {
-            const mLoginBtn = document.createElement('button');
-            mLoginBtn.style.cssText = `
-                flex: 1;
-                max-width: 100px;
-                padding: 8px;
-                font-size: 12px;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 4px;
-                cursor: pointer;
-                transition: all 0.2s;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            `;
-            mLoginBtn.innerHTML = `
-                <span style="font-size: 18px;">👤</span>
-                <span>로그인정보</span>
-            `;
-            mLoginBtn.onclick = () => {
-                alert('로그인 정보:\n' + userInfo.innerText);
-            };
-            buttonsContainer.appendChild(mLoginBtn);
-        }
-        
-        // 헤더 컨텐츠에 추가
-        headerContent.appendChild(buttonsContainer);
-    }
     
     // 하단 혜택 패널 토글 함수
     function toggleBenefitPanel() {
@@ -370,9 +295,8 @@
         const container = document.getElementById('mobile-buttons-container');
         
         if (isMobile) {
-            // 모바일: 버튼과 패널 표시
+            // 모바일: 패널 표시
             if (benefitPanel) benefitPanel.style.display = 'block';
-            createMobileButtons();
         } else {
             // 데스크톱: 모바일 요소들 숨김
             if (benefitPanel) benefitPanel.style.display = 'none';
@@ -380,42 +304,40 @@
         }
     }
     
-    // DOM 로드 후 실행
-    document.addEventListener('DOMContentLoaded', () => {
-        createMobileButtons();
-        updateMobileUI();
-        
-        // 모바일에서 user-info-container 위치 조정
-        function adjustUserInfoPosition() {
+    // 모바일에서 user-info-container 위치 조정 (전역 함수로 이동)
+    function adjustUserInfoPosition() {
             const container = document.getElementById('user-info-container');
-            if (container && window.innerWidth <= 768) {
-                // 인라인 스타일 제거하고 헤더로 이동
+            if (!container) return;
+            
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // 모바일: 헤더로 이동
                 container.style.position = '';
                 container.style.top = '';
                 container.style.right = '';
                 container.style.zIndex = '';
                 
-                // 헤더 컨텐츠에 추가
                 const headerContent = document.querySelector('.header-content');
                 if (headerContent && !headerContent.contains(container)) {
                     headerContent.appendChild(container);
                 }
                 
-                // 구독혜택 버튼 추가 (채널선택 버튼 왼쪽에)
+                // 구독혜택 버튼 추가 (모바일에서만)
                 const backToMain = container.querySelector('.back-to-main');
                 if (backToMain && !container.querySelector('.mobile-benefits-btn')) {
-                    const benefitsBtn = document.createElement('button');
+                    const benefitsBtn = document.createElement('a');
                     benefitsBtn.className = 'mobile-benefits-btn';
-                    benefitsBtn.style.cssText = backToMain.getAttribute('style');
-                    benefitsBtn.style.marginRight = '10px';
+                    benefitsBtn.href = '#';
+                    benefitsBtn.style.cssText = 'text-decoration: none; color: #666; font-size: 12px; display: flex; align-items: center; gap: 5px; padding: 6px 10px; background: white; border-radius: 6px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #ddd; height: 32px; box-sizing: border-box; white-space: nowrap;';
                     benefitsBtn.innerHTML = '<span style="font-size: 16px;">🎁</span> 구독혜택';
-                    benefitsBtn.onclick = () => {
-                        // 구독혜택 버튼 클릭 동작
+                    
+                    benefitsBtn.onclick = (e) => {
+                        e.preventDefault();
                         const desktopBtn = document.querySelector('.subscription-benefits-btn');
                         if (desktopBtn) desktopBtn.click();
                     };
                     
-                    // hover 효과 추가
                     benefitsBtn.onmouseover = function() {
                         this.style.background = '#f5f5f5';
                         this.style.color = '#333';
@@ -425,11 +347,31 @@
                         this.style.color = '#666';
                     };
                     
-                    // 채널선택 버튼 앞에 삽입
                     container.insertBefore(benefitsBtn, backToMain);
                 }
-            }
+            } else {
+                // PC: 원래 위치로 복원
+                container.style.position = 'fixed';
+                container.style.top = '25px';
+                container.style.right = '30px';
+                container.style.zIndex = '1000';
+                
+                // body로 다시 이동
+                if (!document.body.contains(container) || container.parentElement !== document.body) {
+                    document.body.appendChild(container);
+                }
+                
+                // 모바일 구독혜택 버튼 제거
+                const mobileBenefitsBtn = container.querySelector('.mobile-benefits-btn');
+                if (mobileBenefitsBtn) {
+                    mobileBenefitsBtn.remove();
+                }
         }
+    }
+    
+    // DOM 로드 후 실행
+    document.addEventListener('DOMContentLoaded', () => {
+        updateMobileUI();
         
         // MutationObserver로 user-info-container 생성 감지
         const observer = new MutationObserver((mutations) => {
@@ -452,7 +394,10 @@
     });
     
     // 화면 크기 변경 시 다시 체크
-    window.addEventListener('resize', updateMobileUI);
+    window.addEventListener('resize', () => {
+        updateMobileUI();
+        adjustUserInfoPosition();
+    });
     
     // 전역 함수로 노출
     window.toggleBenefitPanel = toggleBenefitPanel;
