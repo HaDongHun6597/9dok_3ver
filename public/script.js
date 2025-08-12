@@ -357,11 +357,38 @@ class SubscriptionCalculator {
         const combinationDiscount = this.parsePrice(product['할인금액']) || 0;
         const totalCombinationBenefit = combinationDiscount * contractMonths;
         
+        // 신한 마이포인트 계산
+        let totalMyPoint = 0;
+        if (partnerCard && partnerCard.cardName) {
+            const cardName = partnerCard.cardName;
+            
+            // 제휴카드 할인 고려한 최종 월요금
+            const periodInfo = this.calculatePeriodBasedDiscount(contractPeriod, partnerCard);
+            let monthlyCardDiscount = 0;
+            
+            // 현재 시점의 카드 할인 (프로모션 기간 우선, 없으면 기본 혜택)
+            if (periodInfo.promotionPeriod > 0) {
+                monthlyCardDiscount = Math.min(partnerCard.promotionDiscount, monthlyFee);
+            } else if (periodInfo.basicPeriod > 0) {
+                monthlyCardDiscount = Math.min(partnerCard.basicDiscount, monthlyFee);
+            }
+            
+            const productFinalPrice = monthlyFee - monthlyCardDiscount - combinationDiscount - activationDiscount;
+            
+            // 신한카드 70만원/130만원 이상 && 월 7만원 이상일 때 월 10,000 포인트
+            if (cardName.includes('신한') && 
+                (cardName.includes('70만원 이상') || cardName.includes('130만원 이상'))) {
+                if (productFinalPrice >= 70000) {
+                    totalMyPoint = 10000 * contractMonths;
+                }
+            }
+        }
+        
         // 총 혜택금액
         const totalBenefit = totalCardBenefit + totalActivationBenefit + totalCombinationBenefit;
         
-        // 실제 지불 총액
-        const actualTotalCost = totalMonthlyFee - totalBenefit;
+        // 실제 지불 총액 (마이포인트 차감)
+        const actualTotalCost = totalMonthlyFee - totalBenefit - totalMyPoint;
         
         return `
             <div class="total-cost-section" style="border-top: 2px solid #e0e0e0; margin-top: 15px; padding-top: 15px; clear: both; width: 100%; max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">
@@ -910,6 +937,9 @@ class SubscriptionCalculator {
         // 선납금액 계산 및 표시
         this.updatePrepaymentSection();
         
+        // 신한 마이포인트 섹션 업데이트
+        this.updateMypointSection();
+        
         console.log('계산기 업데이트:', {
             총액: total,
             정상가: normalPrice,
@@ -1431,6 +1461,103 @@ class SubscriptionCalculator {
             });
         } else {
             prepaymentDetail.innerHTML = '• 해당 제품 없음';
+        }
+    }
+    
+    // 신한 마이포인트 섹션 업데이트
+    updateMypointSection() {
+        const mypointSection = document.getElementById('mypointSection');
+        const mypointPrice = document.getElementById('mypointPrice');
+        const mypointDetail = document.getElementById('mypointDetail');
+        
+        // 신한 마이포인트가 적용되는 제품들 찾기
+        const mypointProducts = [];
+        let totalMyPointContract = 0;
+        
+        this.selectedProducts.forEach(product => {
+            if (product.partnerCard && product.partnerCard.cardName) {
+                const cardName = product.partnerCard.cardName;
+                const monthlyFee = this.parsePrice(product['월요금']);
+                const contractPeriod = product['계약기간'];
+                
+                if (!contractPeriod) return;
+                
+                const contractMonths = parseInt(contractPeriod.replace('년', '')) * 12;
+                
+                // 제휴카드 할인 고려한 최종 월요금 계산
+                const periodInfo = this.calculatePeriodBasedDiscount(contractPeriod, product.partnerCard);
+                let monthlyCardDiscount = 0;
+                
+                if (periodInfo.promotionPeriod > 0) {
+                    monthlyCardDiscount = Math.min(product.partnerCard.promotionDiscount, monthlyFee);
+                } else if (periodInfo.basicPeriod > 0) {
+                    monthlyCardDiscount = Math.min(product.partnerCard.basicDiscount, monthlyFee);
+                }
+                
+                const combinationDiscount = this.parsePrice(product['할인금액']) || 0;
+                const activationDiscount = this.parsePrice(product['활성화']) || 0;
+                const productFinalPrice = monthlyFee - monthlyCardDiscount - combinationDiscount - activationDiscount;
+                
+                // 신한카드 70만원/130만원 이상 && 월 7만원 이상일 때
+                if (cardName.includes('신한') && 
+                    (cardName.includes('70만원 이상') || cardName.includes('130만원 이상'))) {
+                    if (productFinalPrice >= 70000) {
+                        const totalPoints = 10000 * contractMonths;
+                        totalMyPointContract += totalPoints;
+                        mypointProducts.push({
+                            modelName: product['모델명'],
+                            monthlyPoint: 10000,
+                            totalPoint: totalPoints,
+                            contractMonths: contractMonths
+                        });
+                    }
+                }
+            }
+        });
+        
+        if (mypointProducts.length === 0) {
+            mypointSection.style.display = 'none';
+            return;
+        }
+        
+        mypointSection.style.display = 'block';
+        mypointPrice.textContent = `총 ${this.formatPrice(totalMyPointContract)} 지급`;
+        
+        // 세부항목을 개별 div로 생성
+        if (mypointProducts.length > 0) {
+            mypointDetail.innerHTML = '';
+            mypointProducts.forEach(detail => {
+                const detailDiv = document.createElement('div');
+                detailDiv.className = 'mypoint-detail-item';
+                detailDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;';
+                detailDiv.innerHTML = `
+                    <span style="text-align: left;">• ${detail.modelName}</span>
+                    <span style="text-align: right;">월 ${detail.monthlyPoint.toLocaleString()}원 × ${detail.contractMonths}개월</span>
+                `;
+                
+                // 모델명 길이에 따른 폰트 크기 조정
+                const textLength = detail.modelName.length;
+                let fontSize;
+                
+                if (textLength <= 10) {
+                    fontSize = '12px';
+                } else if (textLength <= 15) {
+                    fontSize = '11px';
+                } else if (textLength <= 20) {
+                    fontSize = '10px';
+                } else if (textLength <= 30) {
+                    fontSize = '9px';
+                } else if (textLength <= 40) {
+                    fontSize = '8px';
+                } else {
+                    fontSize = '7px';
+                }
+                
+                detailDiv.style.fontSize = fontSize;
+                mypointDetail.appendChild(detailDiv);
+            });
+        } else {
+            mypointDetail.innerHTML = '• 해당 제품 없음';
         }
     }
 

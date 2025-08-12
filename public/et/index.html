@@ -57,7 +57,16 @@
                         <div class="benefit-price prepayment-price" id="prepaymentPrice">0원</div>
                         <div class="benefit-details">
                             <div class="benefit-detail small-text">선납 선택 시 한번에 납부할 금액</div>
-                            <div class="benefit-detail" id="prepaymentDetail">• 해당 제품 없음</div>
+                            <div class="benefit-detail" id="prepaymentDetail">• 해당 제히 없음</div>
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-item mypoint-section" id="mypointSection" style="display: none;">
+                        <div class="benefit-title">신한 마이포인트 💰</div>
+                        <div class="benefit-price mypoint-price" id="mypointPrice" style="color: #0066cc;">0원</div>
+                        <div class="benefit-details">
+                            <div class="benefit-detail small-text">계약기간 동안 매월 지급되는 포인트</div>
+                            <div class="benefit-detail" id="mypointDetail">• 해당 제품 없음</div>
                         </div>
                     </div>
                 </div>
@@ -295,6 +304,15 @@
                 <div style="font-size: 11px; color: #666; margin-top: 5px;">선납 선택 시 한번에 납부할 금액</div>
             </div>
             
+            <!-- 신한 마이포인트 (필요시 표시) -->
+            <div id="mobile-mypoint-section" style="background: #e8f4fd; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #0066cc; display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 14px; color: #666;">신한 마이포인트 💰</span>
+                    <span id="mobile-mypoint-price" style="font-size: 16px; font-weight: 600; color: #0066cc;">0원</span>
+                </div>
+                <div style="font-size: 11px; color: #666; margin-top: 5px;">계약기간 동안 매월 지급되는 포인트</div>
+            </div>
+            
             <!-- 최종 금액 -->
             <div style="background: linear-gradient(135deg, #A50034, #8A002A); padding: 12px; border-radius: 8px; color: white; margin-bottom: 10px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -385,6 +403,16 @@
             if (prepaymentPrice) document.getElementById('mobile-prepayment-price').textContent = prepaymentPrice.textContent;
         } else {
             document.getElementById('mobile-prepayment-section').style.display = 'none';
+        }
+        
+        // 신한 마이포인트 표시 여부
+        const mypointSection = document.getElementById('mypointSection');
+        const mypointPrice = document.getElementById('mypointPrice');
+        if (mypointSection && mypointSection.style.display !== 'none') {
+            document.getElementById('mobile-mypoint-section').style.display = 'block';
+            if (mypointPrice) document.getElementById('mobile-mypoint-price').textContent = mypointPrice.textContent;
+        } else {
+            document.getElementById('mobile-mypoint-section').style.display = 'none';
         }
         
         // 총혜택 보기 체크 여부 확인 및 총 비용 표시
