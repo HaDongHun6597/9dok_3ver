@@ -101,7 +101,7 @@
     <!-- 모바일 총혜택보기 토글 -->
     <div class="mobile-total-toggle" style="display: none;" id="mobileTotalToggle">
         <label>
-            <input type="checkbox" id="mobileShowTotalCost" onchange="document.getElementById('showTotalCost').checked = this.checked; document.getElementById('showTotalCost').dispatchEvent(new Event('change'));">
+            <input type="checkbox" id="mobileShowTotalCost">
             <span>총혜택 보기</span>
         </label>
     </div>
@@ -242,36 +242,85 @@
     <script src="../product-modal.js"></script>
     <script src="../script.js"></script>
     
-    <!-- 모바일 하단 혜택 패널 -->
+    <!-- 모바일 하단 혜택 계산 패널 -->
     <div id="mobile-benefit-panel" class="mobile-benefit-panel collapsed" style="display: none;">
         <div class="mobile-benefit-header" onclick="toggleBenefitPanel()">
-            <span id="benefit-panel-text">가전 구독 혜택 ▲</span>
-        </div>
-        <div class="mobile-benefit-content">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h3 style="color: #333; font-size: 16px; margin: 0 0 10px 0;">🎁 가전 구독 혜택</h3>
-                <p style="color: #666; font-size: 12px; margin: 0;">월 구독료로 이용하는 다양한 혜택을 확인해보세요</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span style="font-size: 14px; color: #fff;">최종 체감 구독료(월)</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="mobile-final-price" style="font-size: 20px; font-weight: bold; color: #fff;">0원</span>
+                    <span id="benefit-panel-arrow" style="font-size: 14px; color: #fff;">▲</span>
+                </div>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 20px; margin-bottom: 8px;">🛠️</div>
-                    <div style="font-size: 12px; font-weight: 600; color: #333;">설치/철거 무료</div>
-                    <div style="font-size: 10px; color: #666; margin-top: 4px;">전문 기사 방문</div>
+        </div>
+        <div class="mobile-benefit-content" style="padding: 20px;">
+            <h3 style="font-size: 16px; margin: 0 0 15px 0; color: #333;">가전구독 혜택</h3>
+            
+            <!-- 정상 구독료 -->
+            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 14px; color: #666;">정상 구독료</span>
+                    <span id="mobile-normal-price" style="font-size: 16px; font-weight: 600; color: #333;">0원</span>
                 </div>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 20px; margin-bottom: 8px;">🔧</div>
-                    <div style="font-size: 12px; font-weight: 600; color: #333;">A/S 무제한</div>
-                    <div style="font-size: 10px; color: #666; margin-top: 4px;">고장 시 즉시 수리</div>
+            </div>
+            
+            <!-- 추가혜택 -->
+            <div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ffc107;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span style="font-size: 14px; color: #666;">추가혜택</span>
+                    <span id="mobile-promotion-price" style="font-size: 16px; font-weight: 600; color: #dc3545;">0원</span>
                 </div>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 20px; margin-bottom: 8px;">🚚</div>
-                    <div style="font-size: 12px; font-weight: 600; color: #333;">배송 무료</div>
-                    <div style="font-size: 10px; color: #666; margin-top: 4px;">설치까지 원스톱</div>
+                <div id="mobile-benefit-details" style="font-size: 12px; color: #666;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0;">
+                        <span>• 프로모션할인:</span>
+                        <span id="mobile-promotion-discount">0원</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0;">
+                        <span>• 결합할인:</span>
+                        <span id="mobile-combination-discount">0원</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 2px 0;">
+                        <span>• 제휴카드:</span>
+                        <span id="mobile-partner-card">0원</span>
+                    </div>
                 </div>
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 20px; margin-bottom: 8px;">💰</div>
-                    <div style="font-size: 12px; font-weight: 600; color: #333;">경제적</div>
-                    <div style="font-size: 10px; color: #666; margin-top: 4px;">월 소액으로 이용</div>
+            </div>
+            
+            <!-- 선납금액 (필요시 표시) -->
+            <div id="mobile-prepayment-section" style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #2196f3; display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 14px; color: #666;">선납금액 💳</span>
+                    <span id="mobile-prepayment-price" style="font-size: 16px; font-weight: 600; color: #1976d2;">0원</span>
+                </div>
+                <div style="font-size: 11px; color: #666; margin-top: 5px;">선납 선택 시 한번에 납부할 금액</div>
+            </div>
+            
+            <!-- 최종 금액 -->
+            <div style="background: linear-gradient(135deg, #A50034, #8A002A); padding: 12px; border-radius: 8px; color: white; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 14px;">최종 체감 구독료(월)</span>
+                    <span id="mobile-final-price-detail" style="font-size: 18px; font-weight: bold;">0원</span>
+                </div>
+            </div>
+            
+            <!-- 총혜택 보기 체크 시 표시 -->
+            <div id="mobile-total-cost-section" style="background: #f8f8fc; padding: 12px; border-radius: 8px; display: none; border: 1px solid #e0e0e0;">
+                <div style="font-weight: bold; margin-bottom: 10px; color: #333; font-size: 14px;">전체 계약기간 총 비용</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 13px; color: #666;">계약기간:</span>
+                    <span id="mobile-contract-period" style="font-size: 13px; color: #333;">-</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 13px; color: #666;">정가 합계:</span>
+                    <span id="mobile-total-original" style="font-size: 13px; color: #333;">0원</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 13px; color: #666;">총 혜택:</span>
+                    <span id="mobile-total-benefits" style="font-size: 13px; color: #dc3545;">-0원</span>
+                </div>
+                <div style="border-top: 1px solid #ddd; margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 14px; font-weight: bold; color: #333;">실 지불총액:</span>
+                    <span id="mobile-total-cost" style="font-size: 16px; font-weight: bold; color: #1976d2;">0원</span>
                 </div>
             </div>
         </div>
@@ -283,16 +332,122 @@
     // 하단 혜택 패널 토글 함수
     function toggleBenefitPanel() {
         const panel = document.getElementById('mobile-benefit-panel');
-        const text = document.getElementById('benefit-panel-text');
+        const arrow = document.getElementById('benefit-panel-arrow');
         
         if (panel.classList.contains('collapsed')) {
             panel.classList.remove('collapsed');
             panel.classList.add('expanded');
-            text.textContent = '가전 구독 혜택 ▼';
+            arrow.textContent = '▼';
         } else {
             panel.classList.remove('expanded');
             panel.classList.add('collapsed');
-            text.textContent = '가전 구독 혜택 ▲';
+            arrow.textContent = '▲';
+        }
+    }
+    
+    // 모바일 혜택 계산 패널 데이터 업데이트
+    function updateMobileBenefitPanel() {
+        // PC의 계산기 데이터를 모바일 패널에 반영
+        const normalPrice = document.getElementById('normalPrice');
+        const promotionPrice = document.getElementById('promotionPrice');
+        const finalPrice = document.getElementById('finalPrice');
+        const prepaymentSection = document.getElementById('prepaymentSection');
+        const prepaymentPrice = document.getElementById('prepaymentPrice');
+        
+        if (normalPrice) document.getElementById('mobile-normal-price').textContent = normalPrice.textContent;
+        if (promotionPrice) document.getElementById('mobile-promotion-price').textContent = promotionPrice.textContent;
+        if (finalPrice) {
+            document.getElementById('mobile-final-price').textContent = finalPrice.textContent;
+            document.getElementById('mobile-final-price-detail').textContent = finalPrice.textContent;
+        }
+        
+        // 추가혜택 상세 - PC에서 span의 두 번째 요소(금액)를 가져옴
+        const promotionDiscount = document.getElementById('promotionDiscountDetail');
+        const combinationDiscount = document.getElementById('combinationDiscountDetail');
+        const partnerCard = document.getElementById('partnerCardDetail');
+        
+        if (promotionDiscount) {
+            const promotionAmount = promotionDiscount.querySelector('span:last-child')?.textContent || '0원';
+            document.getElementById('mobile-promotion-discount').textContent = promotionAmount;
+        }
+        if (combinationDiscount) {
+            const combinationAmount = combinationDiscount.querySelector('span:last-child')?.textContent || '0원';
+            document.getElementById('mobile-combination-discount').textContent = combinationAmount;
+        }
+        if (partnerCard) {
+            const partnerAmount = partnerCard.querySelector('span:last-child')?.textContent || '0원';
+            document.getElementById('mobile-partner-card').textContent = partnerAmount;
+        }
+        
+        // 선납금액 표시 여부
+        if (prepaymentSection && prepaymentSection.style.display !== 'none') {
+            document.getElementById('mobile-prepayment-section').style.display = 'block';
+            if (prepaymentPrice) document.getElementById('mobile-prepayment-price').textContent = prepaymentPrice.textContent;
+        } else {
+            document.getElementById('mobile-prepayment-section').style.display = 'none';
+        }
+        
+        // 총혜택 보기 체크 여부 확인 및 총 비용 표시
+        const showTotalCost = document.getElementById('showTotalCost');
+        const mobileTotalSection = document.getElementById('mobile-total-cost-section');
+        
+        if (showTotalCost && showTotalCost.checked && mobileTotalSection) {
+            // PC의 updateTotalCostSummary와 동일한 로직 사용
+            if (window.calculator && window.calculator.selectedProducts.length > 0) {
+                let totalContractCost = 0;
+                let totalBenefits = 0;
+                let actualTotalPayment = 0;
+                let maxContractMonths = 0;
+                
+                window.calculator.selectedProducts.forEach(product => {
+                    const monthlyFee = window.calculator.parsePrice(product['월요금']);
+                    const contractPeriod = product['계약기간'];
+                    if (!contractPeriod) return;
+                    
+                    const contractMonths = parseInt(contractPeriod.replace('년', '')) * 12;
+                    if (contractMonths > maxContractMonths) maxContractMonths = contractMonths;
+                    
+                    const totalMonthlyFee = monthlyFee * contractMonths;
+                    
+                    // 카드 혜택 계산
+                    let totalCardBenefit = 0;
+                    if (product.partnerCard) {
+                        const periodInfo = window.calculator.calculatePeriodBasedDiscount(contractPeriod, product.partnerCard);
+                        if (periodInfo.promotionPeriod > 0) {
+                            totalCardBenefit += Math.min(product.partnerCard.promotionDiscount, monthlyFee) * periodInfo.promotionPeriod;
+                        }
+                        if (periodInfo.basicPeriod > 0) {
+                            totalCardBenefit += Math.min(product.partnerCard.basicDiscount, monthlyFee) * periodInfo.basicPeriod;
+                        }
+                    }
+                    
+                    // 활성화 혜택
+                    const activationDiscount = window.calculator.parsePrice(product['활성화']) || 0;
+                    const promotionMonths = parseInt(product['프로모션할인종료월'] || '0');
+                    const totalActivationBenefit = activationDiscount * promotionMonths;
+                    
+                    // 결합할인 혜택
+                    const combinationDiscount = window.calculator.parsePrice(product['할인금액']) || 0;
+                    const totalCombinationBenefit = combinationDiscount * contractMonths;
+                    
+                    const productTotalBenefit = totalCardBenefit + totalActivationBenefit + totalCombinationBenefit;
+                    const productActualCost = totalMonthlyFee - productTotalBenefit;
+                    
+                    totalContractCost += totalMonthlyFee;
+                    totalBenefits += productTotalBenefit;
+                    actualTotalPayment += productActualCost;
+                });
+                
+                // 모바일 총 비용 섹션 업데이트
+                document.getElementById('mobile-contract-period').textContent = maxContractMonths ? `${maxContractMonths}개월` : '-';
+                document.getElementById('mobile-total-original').textContent = totalContractCost > 0 ? `${totalContractCost.toLocaleString()}원` : '0원';
+                document.getElementById('mobile-total-benefits').textContent = totalBenefits > 0 ? `-${totalBenefits.toLocaleString()}원` : '-0원';
+                document.getElementById('mobile-total-cost').textContent = actualTotalPayment > 0 ? `${actualTotalPayment.toLocaleString()}원` : '0원';
+            }
+            
+            mobileTotalSection.style.display = 'block';
+        } else if (mobileTotalSection) {
+            mobileTotalSection.style.display = 'none';
         }
     }
     
@@ -384,6 +539,13 @@
     document.addEventListener('DOMContentLoaded', () => {
         updateMobileUI();
         
+        // 초기 로드 시 모바일 패널 업데이트
+        if (window.innerWidth <= 768) {
+            setTimeout(() => {
+                updateMobileBenefitPanel();
+            }, 500);
+        }
+        
         // MutationObserver로 user-info-container 생성 감지
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
@@ -402,6 +564,61 @@
         
         // 이미 존재하는 경우 즉시 조정
         adjustUserInfoPosition();
+        
+        // 계산기 업데이트 감지 (모바일 패널 업데이트용)
+        const calculatorObserver = new MutationObserver(() => {
+            if (window.innerWidth <= 768) {
+                console.log('계산기 업데이트 감지 - 모바일 패널 업데이트');
+                updateMobileBenefitPanel();
+            }
+        });
+        
+        const finalPriceEl = document.getElementById('finalPrice');
+        if (finalPriceEl) {
+            calculatorObserver.observe(finalPriceEl, { 
+                childList: true, 
+                characterData: true,
+                subtree: true 
+            });
+        }
+        
+        // PC 계산기의 모든 요소 감지
+        const normalPriceEl = document.getElementById('normalPrice');
+        if (normalPriceEl) {
+            calculatorObserver.observe(normalPriceEl, { 
+                childList: true, 
+                characterData: true,
+                subtree: true 
+            });
+        }
+        
+        // 총혜택 보기 체크박스 변경 감지
+        const showTotalCost = document.getElementById('showTotalCost');
+        const mobileShowTotalCost = document.getElementById('mobileShowTotalCost');
+        
+        if (showTotalCost) {
+            showTotalCost.addEventListener('change', () => {
+                console.log('PC 총혜택 체크박스 변경:', showTotalCost.checked);
+                if (window.innerWidth <= 768) {
+                    // 모바일 체크박스도 동기화
+                    if (mobileShowTotalCost) {
+                        mobileShowTotalCost.checked = showTotalCost.checked;
+                    }
+                    updateMobileBenefitPanel();
+                }
+            });
+        }
+        
+        if (mobileShowTotalCost) {
+            mobileShowTotalCost.addEventListener('change', () => {
+                console.log('모바일 총혜택 체크박스 변경:', mobileShowTotalCost.checked);
+                // PC 체크박스도 동기화
+                if (showTotalCost) {
+                    showTotalCost.checked = mobileShowTotalCost.checked;
+                }
+                updateMobileBenefitPanel();
+            });
+        }
     });
     
     // 화면 크기 변경 시 다시 체크
