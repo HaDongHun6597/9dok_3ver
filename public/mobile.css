@@ -1,0 +1,204 @@
+/* 모바일 전용 스타일 - 데스크톱은 절대 건드리지 않음 */
+@media screen and (max-width: 768px) {
+    /* 헤더 타이틀 중앙 정렬 및 크기 조정 */
+    .header h1 {
+        font-size: 18px !important;
+        text-align: center !important;
+        margin: 0 !important;
+    }
+    
+    /* 헤더 컨텐츠 플렉스 */
+    .header-content {
+        display: flex !important;
+        flex-direction: column !important;
+        position: relative !important;
+    }
+    
+    /* 기존 채널 선택 버튼 숨기기 */
+    .header .back-to-main {
+        display: none !important;
+    }
+    
+    /* 우측 상단 사용자 정보/로그아웃 버튼 숨기기 */
+    #user-info-container,
+    #user-info {
+        display: none !important;
+    }
+    
+    /* 3개 버튼 컨테이너를 헤더 바로 아래에 추가 */
+    .header-content::after {
+        content: '';
+        display: flex !important;
+        gap: 8px !important;
+        margin-top: 15px !important;
+        width: 100% !important;
+    }
+    
+    /* 메인 콘텐츠 영역을 모바일 친화적으로 변경 */
+    .main-content {
+        display: block !important;
+        padding: 15px !important;
+        gap: 0 !important;
+        margin-top: 80px !important; /* 3개 버튼 공간 확보 */
+    }
+    
+    /* 기존 데스크톱 사이드바 숨기기 */
+    .calculator-sidebar {
+        display: none !important;
+    }
+    
+    .products-main {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+    
+    /* 기존 products-header 버튼 숨기기 */
+    .products-header {
+        display: none !important;
+    }
+    
+    /* 제품 그리드 모바일 최적화 */
+    .products-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        margin-bottom: 80px !important; /* 하단 패널 공간 */
+    }
+    
+    /* 제품 추가 카드 스타일 개선 */
+    .add-product-card {
+        width: 100% !important;
+        padding: 20px !important;
+        border: 2px dashed #007bff !important;
+        border-radius: 10px !important;
+        background: white !important;
+        margin: 0 !important;
+        min-height: auto !important;
+    }
+    
+    .add-product-card .add-icon {
+        font-size: 28px !important;
+        color: #007bff !important;
+    }
+    
+    .add-product-card .add-text {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        color: #007bff !important;
+        margin-top: 5px !important;
+    }
+    
+    /* 하단 고정 혜택 패널을 실제 요소로 교체 */
+    .mobile-benefit-panel {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        background: white !important;
+        border-top: 1px solid #ddd !important;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1) !important;
+        z-index: 1000 !important;
+        font-family: 'Pretendard', sans-serif !important;
+        transition: height 0.3s ease !important;
+    }
+    
+    .mobile-benefit-panel.collapsed {
+        height: 60px !important;
+    }
+    
+    .mobile-benefit-panel.expanded {
+        height: 300px !important;
+    }
+    
+    .mobile-benefit-header {
+        height: 60px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        color: #333 !important;
+        cursor: pointer !important;
+        border-bottom: 1px solid #eee !important;
+    }
+    
+    .mobile-benefit-content {
+        padding: 20px !important;
+        overflow-y: auto !important;
+        height: calc(300px - 60px) !important;
+        display: none !important;
+    }
+    
+    .mobile-benefit-panel.expanded .mobile-benefit-content {
+        display: block !important;
+    }
+    
+    /* 워터마크 숨김 */
+    .watermark-signature {
+        display: none !important;
+    }
+    
+    /* 웰컴 메시지 숨김 */
+    .welcome-message {
+        display: none !important;
+    }
+    
+    /* 모바일에서 터치 반응 개선 */
+    .add-product-card:active {
+        transform: scale(0.98);
+        background: #f0f8ff !important;
+    }
+    
+    .subscription-benefits-btn:active {
+        transform: scale(0.96);
+        background: #f5f5f5 !important;
+    }
+    
+    /* 모달 모바일 최적화 */
+    .modal-content {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    
+    .modal-header {
+        padding: 15px 20px !important;
+        position: sticky !important;
+        top: 0 !important;
+        background: white !important;
+        z-index: 10 !important;
+        border-bottom: 1px solid #eee !important;
+    }
+    
+    .modal-header h2 {
+        font-size: 18px !important;
+        margin: 0 !important;
+    }
+    
+    .step-indicator {
+        display: none !important;
+    }
+    
+    .modal-scroll-content {
+        padding: 20px !important;
+        height: calc(100vh - 80px) !important;
+        overflow-y: auto !important;
+    }
+    
+    .options-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+    }
+    
+    .option-card {
+        padding: 16px !important;
+        font-size: 14px !important;
+        border-radius: 8px !important;
+        min-height: 48px !important;
+    }
+}

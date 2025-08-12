@@ -41,6 +41,7 @@ app.use('/fonts', express.static('public/fonts'));
 app.use('/html', express.static('public/html'));
 app.use('/shared', express.static('public/shared'));
 app.use('/style.css', express.static('public/style.css'));
+app.use('/mobile.css', express.static('public/mobile.css'));
 app.use('/script.js', express.static('public/script.js'));
 app.use('/product-modal.js', express.static('public/product-modal.js'));
 app.use('/auth.js', express.static('public/auth.js'));

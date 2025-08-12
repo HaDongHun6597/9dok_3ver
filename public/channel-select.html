@@ -26,12 +26,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            margin: 0;
+            padding: 0;
         }
 
         .channel-select-container {
             text-align: center;
             max-width: 600px;
             width: 90%;
+            position: relative;
+            z-index: 10;
         }
 
         .title {
@@ -129,6 +133,65 @@
             height: auto;
             opacity: 0.6;
             z-index: 1000;
+        }
+        
+        /* 모바일 최적화 */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+            
+            .title {
+                font-size: 32px;
+                margin-bottom: 15px;
+            }
+            
+            .subtitle {
+                font-size: 18px;
+                margin-bottom: 40px;
+            }
+            
+            .channel-card {
+                width: 100%;
+                max-width: 280px;
+                padding: 18px 15px;
+                margin: 0 auto;
+            }
+            
+            .channel-name {
+                font-size: 20px;
+            }
+            
+            .credit-text {
+                font-size: 14px;
+                top: 20px;
+                left: 20px;
+            }
+            
+            .company-logo {
+                top: 15px;
+                right: 20px;
+                width: 50px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .title {
+                font-size: 28px;
+            }
+            
+            .subtitle {
+                font-size: 16px;
+            }
+            
+            .channel-card {
+                max-width: 250px;
+                padding: 15px;
+            }
+            
+            .channel-name {
+                font-size: 18px;
+            }
         }
     </style>
 </head>
